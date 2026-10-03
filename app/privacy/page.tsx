@@ -1,73 +1,35 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import type { Metadata } from "next";
+import SiteFrame from "@/components/SiteFrame";
+
+export const metadata: Metadata = {
+  title: "Privacy | Talon Software",
+  description: "How Talon Software handles information submitted through this website.",
+};
 
 export default function PrivacyPage() {
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-        <div className="container mx-auto px-4 py-16 flex-grow">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                Privacy Policy
-              </h1>
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  <strong>Last updated:</strong> {new Date().toLocaleDateString()}
-                </p>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Talon Software is not a business entity. It is a personal brand.
-                  This privacy policy describes how information is collected and used
-                  when you interact with this website.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">
-                  Information We Collect
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  When you use the contact form on this website, we collect the
-                  following information:
-                </p>
-                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 mb-6 space-y-2">
-                  <li>Your name</li>
-                  <li>Your email address</li>
-                  <li>Your message content</li>
-                </ul>
-
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">
-                  How We Use Your Information
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  The information you provide through the contact form is used
-                  solely to respond to your inquiry. We do not share, sell, or
-                  distribute your personal information to third parties.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">
-                  Data Storage
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Contact form submissions are processed and may be stored
-                  temporarily for the purpose of responding to your inquiry. We
-                  take reasonable measures to protect your information, but
-                  please be aware that no method of transmission over the
-                  internet is 100% secure.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4">
-                  Contact
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  If you have any questions about this Privacy Policy, please
-                  contact us through the contact form on this website.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    </>
+    <SiteFrame>
+      <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">Privacy</h1>
+      <div className="mt-4 max-w-3xl space-y-4 text-ink/70">
+        <p>This policy describes information collected when you use this website.</p>
+        <h2 className="font-serif text-xl font-medium text-ink">Information collected</h2>
+        <p>The discovery form collects:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Name, email, and phone</li>
+          <li>Company and role</li>
+          <li>Rough headcount</li>
+          <li>What you are looking for and what prompted the inquiry</li>
+          <li>How you heard about Talon Software</li>
+          <li>Your message</li>
+        </ul>
+        <h2 className="font-serif text-xl font-medium text-ink">How it is used</h2>
+        <p>
+          Submissions are used to reply to the inquiry. They are not sold. The message is delivered
+          by email through a mail provider acting as a processor.
+        </p>
+        <h2 className="font-serif text-xl font-medium text-ink">Contact</h2>
+        <p>Questions about this policy can be sent through the form on this website.</p>
+      </div>
+    </SiteFrame>
   );
 }

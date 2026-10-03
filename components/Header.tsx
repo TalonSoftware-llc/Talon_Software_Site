@@ -1,57 +1,68 @@
-import Link from "next/link";
-import Image from "next/image";
+"use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import Wordmark from "@/components/Wordmark";
+
+const links = [
+  { href: "/plans", label: "Plans" },
+  { href: "/assessments", label: "Services" },
+  { href: "/how-we-work", label: "How we work" },
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+];
 
 export default function Header() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50 shadow-sm">
-      <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-3 text-2xl font-bold text-blue-900 hover:text-blue-900 transition-colors"
-          >
-            <Image
-              src="/Talon Software Logo.jpg"
-              alt="Talon Software Logo"
-              width={40}
-              height={40}
-              className="rounded-lg object-contain"
-            />
-            Talon Software
+    <header className="sticky top-0 z-40 border-b border-[#e4ddd2] bg-paper/95 backdrop-blur">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <Link href="/" aria-label="Talon Software home">
+          <Wordmark />
+        </Link>
+        <button
+          type="button"
+          className="rounded-md border border-ink/20 px-3 py-1 text-xs uppercase tracking-wider text-ink md:hidden"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          Menu
+        </button>
+        <div className="hidden items-center gap-7 md:flex">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/70 hover:text-ink"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link href="/contact" className="btn-ink">
+            Book a call
           </Link>
-          <div className="flex items-center space-x-8">
-            <Link
-              href="/"
-              className="text-slate-700 font-medium hover:text-blue-600 transition-colors relative group"
-            >
-              Home
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/products"
-              className="text-slate-700 font-medium hover:text-blue-600 transition-colors relative group"
-            >
-              Products
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/products/coming-soon"
-              className="text-slate-700 font-medium hover:text-blue-600 transition-colors relative group"
-            >
-              Coming soon
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
-            </Link>
-            <Link
-              href="/contact"
-              className="text-slate-700 font-medium hover:text-blue-600 transition-colors relative group"
-            >
-              Contact
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+        </div>
+      </nav>
+      {open && (
+        <div className="border-t border-[#e4ddd2] px-6 py-4 md:hidden">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm text-ink"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link href="/contact" className="btn-ink w-fit" onClick={() => setOpen(false)}>
+              Book a call
             </Link>
           </div>
         </div>
-      </nav>
+      )}
     </header>
   );
 }

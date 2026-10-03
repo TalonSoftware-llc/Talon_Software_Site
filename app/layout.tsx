@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const sans = Source_Sans_3({ subsets: ["latin"], variable: "--font-sans" });
+const serif = Source_Serif_4({ subsets: ["latin"], variable: "--font-serif" });
+const wordmark = Fraunces({ subsets: ["latin"], weight: "500", variable: "--font-wordmark" });
 
 export const metadata: Metadata = {
-  title: "Talon Software",
-  description: "Talon Software delivers professional software solutions to businesses across the United States. We specialize in SaaS applications, custom website features, and business software consulting.",
+  title: {
+    default: "Talon Software",
+    template: "%s",
+  },
+  description:
+    "Fractional technology leadership for owner-led companies in Vancouver, Washington, and remote where the company allows it.",
   icons: {
     icon: "/Talon Software Logo.jpg",
     shortcut: "/Talon Software Logo.jpg",
@@ -14,7 +20,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Talon Software",
-    description: "Professional software solutions for businesses across the United States. Specializing in SaaS applications, custom website features, and business software consulting.",
+    description:
+      "Fractional technology leadership for owner-led companies. Monthly plans and fixed assessments.",
     url: "https://talonsoftware.com",
     siteName: "Talon Software",
     images: [
@@ -31,7 +38,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Talon Software",
-    description: "Professional software solutions for businesses across the United States.",
+    description:
+      "Fractional technology leadership for owner-led companies in Vancouver, Washington.",
     images: ["/Talon Software Logo.jpg"],
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://talonsoftware.com"),
@@ -44,7 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${sans.variable} ${serif.variable} ${wordmark.variable} font-sans`}>{children}</body>
     </html>
   );
 }

@@ -14,10 +14,31 @@ if (process.env.SENDGRID_API_KEY) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, message } = body;
+    const {
+      name,
+      email,
+      phone,
+      message,
+      company,
+      role,
+      headcount,
+      interest,
+      trigger,
+      heardFrom,
+    } = body;
 
-    // Validate input
-    if (!name || !email || !phone || !message) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !message ||
+      !company ||
+      !role ||
+      !headcount ||
+      !interest ||
+      !trigger ||
+      !heardFrom
+    ) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -58,22 +79,49 @@ export async function POST(request: NextRequest) {
     const toEmail = process.env.CONTACT_EMAIL || "contact@talonsoftware.com";
 
     // Prepare email
+    const escape = (value: string) =>
+      String(value).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const details = [
+      ["Name", name],
+      ["Email", email],
+      ["Phone", phone],
+      ["Company", company],
+      ["Role", role],
+      ["Headcount", headcount],
+      ["Interest", interest],
+      ["Trigger", trigger],
+      ["Heard from", heardFrom],
+    ] as const;
+
+    const text = [
+      ...details.map(([label, value]) => `${label}: ${value}`),
+      "",
+      "Message:",
+      message,
+    ].join("\n");
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Discovery request</h2>
+          ${details
+            .map(
+              ([label, value]) =>
+                `<p><strong>${label}:</strong> ${escape(value)}</p>`
+            )
+            .join("")}
+          <h3 style="color: #333; margin-top: 20px;">Message</h3>
+          <p style="white-space: pre-wrap;">${escape(message)}</p>
+        </div>
+      `;
+
     const msg = {
       to: toEmail,
       from: process.env.SENDGRID_FROM_EMAIL || "noreply@talonsoftware.com",
       replyTo: email,
-      subject: `Contact Form Submission from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nMessage:\n${message}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${name.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-          <p><strong>Email:</strong> ${email.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-          <p><strong>Phone:</strong> ${phone.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-          <h3 style="color: #333; margin-top: 20px;">Message:</h3>
-          <p style="white-space: pre-wrap;">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
-        </div>
-      `,
+      subject: `Discovery request from ${name} (${company})`,
+      text,
+      html,
     };
 
     // Send email via SendGrid

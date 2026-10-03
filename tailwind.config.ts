@@ -11,6 +11,14 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        ink: "#1b2430",
+        paper: "#f4f0e8",
+        pine: "#1f4d45",
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        wordmark: ["var(--font-wordmark)", "system-ui", "sans-serif"],
       },
     },
   },
