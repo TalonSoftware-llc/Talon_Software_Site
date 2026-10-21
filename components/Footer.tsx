@@ -1,42 +1,53 @@
-import Link from "next/link";
+import SiteLink from "@/components/SiteLink";
 import Wordmark from "@/components/Wordmark";
+import type { ChromeLink, SiteChrome } from "@/lib/navigation";
 
-export default function Footer() {
+export default function Footer({ chrome }: { chrome: SiteChrome }) {
   return (
     <footer className="mt-auto bg-ink text-paper/80">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
         <div className="md:col-span-1">
-          <Link href="/" aria-label="Talon Software home" className="inline-flex">
+          <SiteLink href={chrome.homeHref} aria-label="Talon Software home" className="inline-flex">
             <Wordmark tone="paper" />
-          </Link>
-          <p className="mt-3 text-sm leading-relaxed">
-            Fractional CTO services. Vancouver, Washington.
-          </p>
+          </SiteLink>
+          <p className="mt-3 text-sm leading-relaxed">Fractional CTO services. Vancouver, Washington.</p>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-paper/50">Areas</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {chrome.footerAreas.map((link) => (
+              <li key={link.href}>
+                <FooterLink link={link} />
+              </li>
+            ))}
+          </ul>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper/50">Practice</p>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/plans" className="hover:text-paper">Plans</Link></li>
-            <li><Link href="/assessments" className="hover:text-paper">Services</Link></li>
-            <li><Link href="/how-we-work" className="hover:text-paper">How we work</Link></li>
-            <li><Link href="/offer" className="hover:text-paper">Offer sheet</Link></li>
-            <li><Link href="/work" className="hover:text-paper">Proof</Link></li>
+            {chrome.footerPractice.map((link) => (
+              <li key={link.href}>
+                <FooterLink link={link} />
+              </li>
+            ))}
           </ul>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper/50">Company</p>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/about" className="hover:text-paper">About</Link></li>
-            <li><Link href="/faq" className="hover:text-paper">FAQ</Link></li>
-            <li><Link href="/contact" className="hover:text-paper">Book a call</Link></li>
-            <li><Link href="/products" className="hover:text-paper">Products</Link></li>
+            {chrome.footerCompany.map((link) => (
+              <li key={link.href}>
+                <FooterLink link={link} />
+              </li>
+            ))}
           </ul>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paper/50">Legal</p>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/privacy" className="hover:text-paper">Privacy</Link></li>
-            <li><Link href="/terms" className="hover:text-paper">Website terms</Link></li>
+            {chrome.footerLegal.map((link) => (
+              <li key={link.href}>
+                <FooterLink link={link} />
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -44,5 +55,13 @@ export default function Footer() {
         © {new Date().getFullYear()} Talon Software · Vancouver, Washington
       </div>
     </footer>
+  );
+}
+
+function FooterLink({ link }: { link: ChromeLink }) {
+  return (
+    <SiteLink href={link.href} className="hover:text-paper">
+      {link.label}
+    </SiteLink>
   );
 }

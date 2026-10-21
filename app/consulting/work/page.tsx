@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
+import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "Proof | Talon Software",
@@ -8,7 +9,9 @@ export const metadata: Metadata = {
     "What a Talon Software engagement produces, and how references are shared.",
 };
 
-export default function WorkPage() {
+export default async function WorkPage() {
+  const contact = await areaHref("consulting", "/contact");
+
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">Proof</h1>
@@ -30,7 +33,7 @@ export default function WorkPage() {
         The assessment is the first piece of proof. Leadership sees the thinking on their own
         company before they commit to a monthly plan.
       </p>
-      <Link href="/contact" className="mt-6 inline-block text-sm font-medium underline">
+      <Link href={contact} className="mt-6 inline-block text-sm font-medium underline">
         Request a discovery call
       </Link>
     </SiteFrame>

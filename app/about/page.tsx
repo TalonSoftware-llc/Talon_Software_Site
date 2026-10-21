@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
+import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "About | Talon Software",
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
     "Talon Software is the practice of Kendall Tapani. Fractional CTO services from Vancouver, Washington.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const products = await areaHref("main", "/products");
+  const contact = await areaHref("consulting", "/contact");
+
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">About</h1>
@@ -33,13 +37,13 @@ export default function AboutPage() {
         </p>
         <p>
           He also built this website. A few tools, separate from client work, are on the{" "}
-          <Link href="/products" className="underline">
+          <Link href={products} className="underline">
             products
           </Link>{" "}
           page.
         </p>
       </div>
-      <Link href="/contact" className="btn-ink mt-8">
+      <Link href={contact} className="btn-ink mt-8">
         Request a discovery call
       </Link>
     </SiteFrame>

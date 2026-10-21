@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
+import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "Referral partners | Talon Software",
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
     "Who to introduce to Talon Software: owners of established 25 to 200 person companies who need technology leadership.",
 };
 
-export default function PartnersPage() {
+export default async function PartnersPage() {
+  const offer = await areaHref("consulting", "/offer");
+  const contact = await areaHref("consulting", "/contact?interest=partner");
+
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">For referral partners</h1>
@@ -53,10 +57,10 @@ export default function PartnersPage() {
           proposed only after leadership has seen the report.
         </p>
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <Link href="/offer" className="font-medium underline">
+          <Link href={offer} className="font-medium underline">
             One-page offer sheet
           </Link>
-          <Link href="/contact?interest=partner" className="font-medium underline">
+          <Link href={contact} className="font-medium underline">
             Send an introduction
           </Link>
         </div>

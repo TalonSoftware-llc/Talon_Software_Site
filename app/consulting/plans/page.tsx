@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
+import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "Plans | Talon Software",
@@ -26,7 +27,9 @@ const pro = [
   "A seat in leadership meetings, plain-language reporting, and technical due diligence for acquisitions or investors.",
 ];
 
-export default function PlansPage() {
+export default async function PlansPage() {
+  const contact = await areaHref("consulting", "/contact?interest=plan");
+
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">Two monthly plans</h1>
@@ -97,7 +100,7 @@ export default function PlansPage() {
             an officer of the company
           </li>
         </ul>
-        <Link href="/contact?interest=plan" className="mt-4 inline-block text-sm font-medium underline">
+        <Link href={contact} className="mt-4 inline-block text-sm font-medium underline">
           Request a discovery call
         </Link>
       </section>

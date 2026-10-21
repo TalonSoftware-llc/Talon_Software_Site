@@ -5,8 +5,8 @@ Main site for Talon Software - Built with Next.js, React, TypeScript, and Tailwi
 
 ## Features
 
-- ⚡ Next.js 14 with App Router
-- ⚛️ React 18 with TypeScript
+- ⚡ Next.js with App Router
+- ⚛️ React with TypeScript
 - 🎨 Tailwind CSS for styling
 - 📧 Contact form with SendGrid integration
 - 🌙 Dark mode support
@@ -51,6 +51,8 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+Locally there is no custom host, so each area is a path: `/` (main), `/consulting`, `/engineering`, and `/support`. On the deployed domains the same pages are chosen from the `Host` header. The main domain is `NEXT_PUBLIC_SITE_URL`, defaulting to `https://talonsoftware.dev`. See `VERCEL_SETUP.md` for the domains to attach.
+
 ## Project Structure
 
 ```
@@ -76,7 +78,7 @@ npm start
 
 ## Technologies Used
 
-- **Next.js 14** - React framework with App Router
+- **Next.js** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
 - **Tailwind CSS** - Utility-first CSS framework
 - **SendGrid** - Email delivery service

@@ -23,10 +23,34 @@ Add these environment variables in your Vercel project settings:
 ### Optional Variables
 
 4. **NEXT_PUBLIC_SITE_URL**
-   - Your production site URL
-   - Used for Open Graph metadata
-   - Example: `https://talonsoftware.com`
-   - If not set, defaults to `https://talonsoftware.com`
+   - The main site origin. This is the only place the main domain is configured.
+   - Used for canonical URLs, Open Graph metadata, and host routing.
+   - Current value: `https://talonsoftware.dev`
+   - If unset, the site defaults to `https://talonsoftware.dev`
+   - When `talon.software` is purchased and should become the main domain, set this to `https://talon.software` and attach that domain. No page copy needs to change.
+
+## Domains on project `talon-software-site`
+
+Attach every domain to the same Vercel project. The app reads the `Host` header and chooses the area. Do not create a separate project per domain.
+
+| Domain | Area | What it serves |
+| --- | --- | --- |
+| `talonsoftware.dev` | Main | Company front door, about, products, privacy, and terms. Set `NEXT_PUBLIC_SITE_URL` to this origin. |
+| `talon.consulting` | Consulting | Fractional CTO plans, services, how we work, FAQ, and the discovery-call form. |
+| `talon.engineering` | Engineering | Coming soon. |
+| `talon.support` | Support | Client support portal shell. Sign-in is not wired up. |
+| `talon.software` (later) | Main | Replace `talonsoftware.dev` by changing `NEXT_PUBLIC_SITE_URL` and attaching the domain. |
+
+`www` on any of those hosts permanently redirects to the apex host.
+
+Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. Use a path instead:
+
+- `/` main
+- `/consulting` and `/consulting/plans`
+- `/engineering`
+- `/support`, `/support/sign-in`, `/support/ai`, `/support/tickets`, `/support/processes`, `/support/information`
+
+On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/plans`, not `https://talonsoftware.dev/consulting/plans`), so the same page is not indexed twice. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
 
 ## How to Add Environment Variables in Vercel
 
