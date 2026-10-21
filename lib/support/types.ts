@@ -14,7 +14,7 @@ export type TicketCategory =
   | "Software"
   | "Security";
 
-export type Department = "Leadership" | "Clinical" | "Client care" | "Operations" | "Finance";
+export type Department = "Leadership" | "Field" | "Office" | "Operations" | "Finance";
 
 export type PersonStatus = "Active" | "Onboarding" | "Offboarding";
 
@@ -238,16 +238,21 @@ export type SecuritySnapshot = {
   checks: { id: string; label: string; state: "Met" | "Gap"; detail: string; href: string }[];
 };
 
+export type ProjectStatus = "Planned" | "In progress" | "Done";
+
 export type Project = {
   id: string;
   name: string;
-  status: string;
+  status: ProjectStatus;
   progress: number;
   owner: string;
   summary: string;
   spent: number;
   budget: number;
+  target: string;
+  next: string;
   milestones: { name: string; done: boolean; due: string }[];
+  updates: { at: string; text: string }[];
 };
 
 export type RoadmapItem = { quarter: string; items: { name: string; state: string }[] };

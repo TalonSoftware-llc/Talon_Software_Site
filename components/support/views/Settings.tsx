@@ -36,7 +36,7 @@ export function SettingsView() {
           <label className="block text-sm font-semibold">Outage recipients
             <select className={fieldClass + " mt-1"} value={prefs.outageRecipients} onChange={(event) => setPrefs({ ...prefs, outageRecipients: event.target.value as typeof prefs.outageRecipients })}>
               <option>Leadership</option>
-              <option>Clinic leads</option>
+              <option>Project leads</option>
               <option>Everyone</option>
             </select>
           </label>

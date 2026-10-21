@@ -45,15 +45,15 @@ const draftAssistantReply = assistant.draftAssistantReply as (turn: {
 }) => { text: string; cites: { href: string }[] };
 
 const facts: AssistantFacts = {
-  workspaceName: "Larkspur Veterinary Group",
+  workspaceName: "Granite Peak Builders",
   plan: "Pro",
   role: "leadership",
   directory: "Microsoft Entra ID",
-  monthlySpend: 28400,
-  monthlyBudget: 27000,
+  monthlySpend: 25880,
+  monthlyBudget: 24845,
   openTickets: 4,
-  mfaMissing: 2,
-  headcount: 86,
+  mfaMissing: 6,
+  headcount: 90,
   degraded: [],
 };
 
@@ -64,7 +64,7 @@ const spend = draftAssistantReply({
   hints: [],
   facts,
 });
-assert.match(spend.text, /\$28,400/);
+assert.match(spend.text, /\$25,880/);
 assert.ok(spend.cites.some((cite) => cite.href === "/app/spending"));
 
 const staff = draftAssistantReply({
@@ -74,7 +74,7 @@ const staff = draftAssistantReply({
   hints: [],
   facts: { ...facts, role: "staff" },
 });
-assert.equal(staff.text.includes("28400"), false);
+assert.equal(staff.text.includes("25880"), false);
 assert.equal(staff.text.includes("$"), false);
 
 const onboard = draftAssistantReply({
@@ -104,5 +104,25 @@ const freeze = draftAssistantReply({
 });
 assert.match(freeze.text, /Freeze account/);
 assert.equal(freeze.cites.some((cite) => cite.href.includes("security")), false);
+
+const procore = draftAssistantReply({
+  question: "How is the Procore integration going?",
+  pageTitle: "Projects",
+  pageSection: "projects",
+  hints: [],
+  facts,
+});
+assert.match(procore.text, /In progress/);
+assert.ok(procore.cites.some((cite) => cite.href === "/app/projects/procore-sage"));
+assert.equal(procore.cites.some((cite) => cite.href.includes("security")), false);
+
+const staffProject = draftAssistantReply({
+  question: "How is the Procore integration going?",
+  pageTitle: "Home",
+  pageSection: "home",
+  hints: [],
+  facts: { ...facts, role: "staff" },
+});
+assert.equal(staffProject.cites.some((cite) => cite.href.includes("projects")), false);
 
 console.log("assistant checks passed");

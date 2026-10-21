@@ -28,15 +28,17 @@ import type {
 } from "../types";
 
 const hour = 3_600_000;
+const GRANITE = "granite";
+const REDLINE = "redline";
 
 const firstNames = [
-  "Beth", "Carl", "Diana", "Felix", "Gail", "Harvey", "Iris", "Joel", "Kara", "Liam",
+  "Beth", "Carl", "Diana", "Gail", "Harvey", "Iris", "Joel", "Kara", "Liam",
   "Mia", "Nate", "Olive", "Pete", "Quinn", "Rita", "Seth", "Tara", "Uma", "Victor",
-  "Willa", "Yves", "Zoe", "Aaron", "Brooke", "Cody", "Drew", "Elena", "Frank", "Gina",
-  "Hugo", "Jade", "Kyle", "Lana", "Miles", "Nadia", "Omar", "Pia", "Reed", "Sage",
-  "Tessa", "Uri", "Vera", "Walt", "Xenia", "Yara", "Zane", "Blake", "Cora", "Dean",
-  "Eden", "Finn", "Hana", "Ivan", "June", "Kent", "Lucia", "Mason", "Nell", "Otto",
-  "Paige", "Remy", "Shay", "Troy", "Una", "Vince",
+  "Willa", "Yves", "Zoe", "Aaron", "Brooke", "Cody", "Drew", "Frank", "Gina",
+  "Hugo", "Jade", "Lana", "Nadia", "Omar", "Pia", "Reed", "Tessa", "Uri", "Vera",
+  "Walt", "Yara", "Zane", "Blake", "Dean", "Eden", "Finn", "Hana", "Ivan", "June",
+  "Kent", "Lucia", "Mason", "Nell", "Otto", "Remy", "Shay", "Troy", "Una", "Vince",
+  "Nora", "Chris", "Ruth", "Leah", "Wes", "Grace", "Rosa", "Helen", "Jonah",
 ];
 
 const lastNames = [
@@ -60,6 +62,8 @@ type Named = {
   phone?: boolean;
 };
 
+type Prices = { m365: number; field: number; bluebeam: number; books: number };
+
 function emailFor(name: string, domain: string): string {
   const [first, ...rest] = name.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/);
   return `${first}.${rest.join("")}@${domain}`;
@@ -74,9 +78,9 @@ function deviceFor(
 ): Device {
   const spec = {
     laptop: { name: "Laptop", type: "Laptop" as const, purchased: "2024-03-12", price: 1480 },
-    desktop: { name: "Front desk PC", type: "Desktop" as const, purchased: "2023-11-02", price: 980 },
+    desktop: { name: "Desk PC", type: "Desktop" as const, purchased: "2023-11-02", price: 980 },
     old: { name: "Laptop", type: "Laptop" as const, purchased: "2021-04-15", price: 1320 },
-    tablet: { name: "Exam tablet", type: "Tablet" as const, purchased: "2024-06-01", price: 640 },
+    tablet: { name: "Field tablet", type: "Tablet" as const, purchased: "2024-06-01", price: 640 },
     phone: { name: "Work phone", type: "Phone" as const, purchased: "2025-01-09", price: 720 },
   }[kind];
   return {
@@ -92,49 +96,36 @@ function deviceFor(
   };
 }
 
-function licensesFor(department: Person["department"], pims: string, m365: number, pimsPrice: number, acrobat: number): Person["licenses"] {
-  const items: Person["licenses"] = [{ name: "Microsoft 365", monthly: m365 }];
-  if (department === "Clinical") items.push({ name: pims, monthly: pimsPrice });
-  if (department === "Finance") items.push({ name: "Acrobat", monthly: acrobat });
+function licensesFor(department: Person["department"], fieldSystem: string, books: string, prices: Prices): Person["licenses"] {
+  const suite = prices.m365 === 22 ? "Google Workspace" : "Microsoft 365";
+  const items: Person["licenses"] = [{ name: suite, monthly: prices.m365 }];
+  if (department === "Field") items.push({ name: fieldSystem, monthly: prices.field });
+  if (department === "Office") items.push({ name: "Bluebeam", monthly: prices.bluebeam });
+  if (department === "Finance") items.push({ name: books, monthly: prices.books });
   return items;
 }
 
 function groupsFor(spec: Named, directory: "entra" | "google"): string[] {
-  const place = spec.location.split(" ")[0];
   const privileged = spec.id === "p-mara" || spec.id === "p-priya" || spec.id === "p-camille" || spec.id === "p-adele";
-  if (directory === "google") {
-    const groups = [`${place.toLowerCase()}-team`];
-    if (spec.department === "Clinical") groups.push("clinical");
-    if (spec.department === "Client care") groups.push("front-desk");
-    if (spec.department === "Finance") groups.push("finance");
-    if (spec.department === "Operations") groups.push("operations");
-    if (privileged) groups.push("workspace-admins");
-    return groups;
-  }
-  const groups = [`SG-${place}`];
-  if (spec.department === "Clinical") groups.push("SG-Clinical");
-  if (spec.department === "Client care") groups.push("SG-FrontDesk");
-  if (spec.department === "Finance") groups.push("SG-Finance");
-  if (spec.department === "Operations") groups.push("SG-Operations");
-  if (privileged) groups.push("Privileged roles");
+  const field = directory === "google" ? "field" : "SG-Field";
+  const office = directory === "google" ? "office-team" : "SG-Office";
+  const finance = directory === "google" ? "finance" : "SG-Finance";
+  const ops = directory === "google" ? "operations" : "SG-Operations";
+  const groups = [directory === "google" ? "office-team" : "SG-Office"];
+  if (spec.department === "Field") groups.push(field);
+  if (spec.department === "Office") groups.push(office);
+  if (spec.department === "Finance") groups.push(finance);
+  if (spec.department === "Operations") groups.push(ops);
+  if (privileged) groups.push(directory === "google" ? "workspace-admins" : "Privileged roles");
   return groups;
 }
 
-function buildPerson(
-  spec: Named,
-  domain: string,
-  areaCode: (location: string) => string,
-  index: number,
-  pims: string,
-  prices: { m365: number; pims: number; acrobat: number },
-  directory: "entra" | "google",
-): Person {
+function buildPerson(spec: Named, domain: string, index: number, fieldSystem: string, books: string, prices: Prices, directory: "entra" | "google"): Person {
   const email = emailFor(spec.name, domain);
   const join = directory === "entra" ? "Entra" : "Google";
   const leadThreat: ThreatDownState = spec.device === "old" ? "Threats" : spec.id === "p-sam" || spec.id === "p-jordan" ? "Isolated" : "Protected";
   const devices: Device[] = [deviceFor(spec.id, spec.device ?? "laptop", email, join, leadThreat)];
-  if (spec.id === "p-sam") devices[0].name = "Lab PC";
-  if (spec.id === "p-jordan") devices[0].name = "Dental PC";
+  if (spec.id === "p-sam") devices[0].name = "Plotter PC";
   if (spec.tablet) devices.push(deviceFor(spec.id, "tablet", email, join, "Protected"));
   if (spec.phone) devices.push(deviceFor(spec.id, "phone", email, join, "Protected"));
   return {
@@ -145,14 +136,12 @@ function buildPerson(
     location: spec.location,
     managerId: spec.managerId,
     email,
-    phone: `(${areaCode(spec.location)}) 555-${String(1000 + index).padStart(4, "0")}`,
+    phone: `(208) 555-${String(1000 + index).padStart(4, "0")}`,
     startDate: spec.startDate,
     status: spec.status ?? "Active",
     mfa: spec.mfa ?? true,
     training: spec.training ?? "Current",
-    licenses: licensesFor(spec.department, pims, prices.m365, prices.pims, prices.acrobat).map((license) =>
-      directory === "google" && license.name === "Microsoft 365" ? { ...license, name: "Google Workspace" } : license,
-    ),
+    licenses: licensesFor(spec.department, fieldSystem, books, prices),
     devices,
     groups: groupsFor(spec, directory),
     privileged: spec.id === "p-mara" || spec.id === "p-priya" || spec.id === "p-camille" || spec.id === "p-adele",
@@ -165,151 +154,133 @@ function buildPerson(
   };
 }
 
-const larkspurNamed: Named[] = [
-  { id: "p-mara", name: "Mara Ellison", role: "Managing partner", department: "Leadership", location: "Asheville", managerId: null, startDate: "2014-04-02", phone: true },
-  { id: "p-helen", name: "Helen Brooks", role: "Medical director", department: "Clinical", location: "Asheville", managerId: "p-mara", startDate: "2016-08-15", phone: true, tablet: true },
-  { id: "p-priya", name: "Priya Shah", role: "Practice manager", department: "Operations", location: "Hickory", managerId: "p-mara", startDate: "2018-02-01", phone: true },
-  { id: "p-jonah", name: "Jonah Keller", role: "Finance lead", department: "Finance", location: "Asheville", managerId: "p-mara", startDate: "2017-05-19", phone: true },
-  { id: "p-evan", name: "Evan Cho", role: "Client care lead", department: "Client care", location: "Asheville", managerId: "p-mara", startDate: "2019-09-09", device: "desktop", phone: true },
-  { id: "p-luis", name: "Luis Vega", role: "Clinic lead", department: "Clinical", location: "Greenville", managerId: "p-helen", startDate: "2018-11-12", phone: true, tablet: true },
-  { id: "p-nora", name: "Nora Parks", role: "Clinic lead", department: "Operations", location: "Hickory", managerId: "p-priya", startDate: "2020-01-20", phone: true },
-  { id: "p-amina", name: "Amina Diallo", role: "Veterinarian", department: "Clinical", location: "Asheville", managerId: "p-helen", startDate: "2021-03-08", tablet: true },
-  { id: "p-chris", name: "Chris Nguyen", role: "Veterinarian", department: "Clinical", location: "Hickory", managerId: "p-helen", startDate: "2019-06-03", tablet: true },
-  { id: "p-ruth", name: "Ruth Adler", role: "Veterinary technician", department: "Clinical", location: "Greenville", managerId: "p-luis", startDate: "2022-07-11" },
-  { id: "p-owen", name: "Owen Blake", role: "Veterinary technician", department: "Clinical", location: "Asheville", managerId: "p-amina", startDate: "2023-02-14", mfa: false },
-  { id: "p-sam", name: "Sam Ibarra", role: "Client care", department: "Client care", location: "Greenville", managerId: "p-evan", startDate: "2021-10-04", device: "desktop" },
-  { id: "p-leah", name: "Leah Ortiz", role: "Bookkeeper", department: "Finance", location: "Asheville", managerId: "p-jonah", startDate: "2020-04-27" },
-  { id: "p-wes", name: "Wes Palmer", role: "Clinic coordinator", department: "Operations", location: "Asheville", managerId: "p-priya", startDate: "2024-08-19" },
-  { id: "p-dana", name: "Dana Cho", role: "Client care", department: "Client care", location: "Hickory", managerId: "p-evan", startDate: "2022-01-10", status: "Offboarding", device: "desktop" },
-  { id: "p-imani", name: "Imani Reed", role: "Veterinary technician", department: "Clinical", location: "Hickory", managerId: "p-chris", startDate: "2019-12-02", device: "old" },
-  { id: "p-theo", name: "Theo Marsh", role: "Associate veterinarian", department: "Clinical", location: "Greenville", managerId: "p-luis", startDate: "2026-10-06", status: "Onboarding", mfa: false, tablet: true },
-  { id: "p-grace", name: "Grace Kim", role: "Client care", department: "Client care", location: "Asheville", managerId: "p-evan", startDate: "2023-05-22", device: "desktop" },
-  { id: "p-neil", name: "Neil Soto", role: "Facilities", department: "Operations", location: "Asheville", managerId: "p-priya", startDate: "2015-09-14" },
-  { id: "p-rosa", name: "Rosa Bennett", role: "Veterinary technician", department: "Clinical", location: "Asheville", managerId: "p-amina", startDate: "2024-01-16" },
+const graniteNamed: Named[] = [
+  { id: "p-mara", name: "Cole Brennan", role: "President", department: "Leadership", location: "Main office", managerId: null, startDate: "2011-03-04", phone: true },
+  { id: "p-priya", name: "Ren Alvarez", role: "Operations manager", department: "Operations", location: "Main office", managerId: "p-mara", startDate: "2016-01-11", phone: true },
+  { id: "p-helen", name: "June Adler", role: "Safety coordinator", department: "Operations", location: "Yard", managerId: "p-priya", startDate: "2018-05-02", phone: true },
+  { id: "p-jonah", name: "Wes Calder", role: "Accounting lead", department: "Finance", location: "Main office", managerId: "p-mara", startDate: "2015-09-14", phone: true },
+  { id: "p-evan", name: "Nina Cho", role: "Office manager", department: "Office", location: "Main office", managerId: "p-priya", startDate: "2019-04-08", device: "desktop", phone: true },
+  { id: "p-luis", name: "Andre Vega", role: "Project manager", department: "Field", location: "River Street trailer", managerId: "p-priya", startDate: "2017-06-19", phone: true, tablet: true },
+  { id: "p-nora", name: "Tess Nguyen", role: "Project manager", department: "Field", location: "State Street trailer", managerId: "p-priya", startDate: "2019-02-25", phone: true, tablet: true },
+  { id: "p-amina", name: "Luis Ortega", role: "Superintendent", department: "Field", location: "River Street trailer", managerId: "p-luis", startDate: "2018-08-13", tablet: true, phone: true },
+  { id: "p-chris", name: "Dana Ibarra", role: "Superintendent", department: "Field", location: "State Street trailer", managerId: "p-nora", startDate: "2020-03-02", tablet: true },
+  { id: "p-ruth", name: "Omar Reid", role: "Field foreman", department: "Field", location: "Parkcenter trailer", managerId: "p-luis", startDate: "2021-07-12" },
+  { id: "p-owen", name: "Kyle Brooks", role: "Field foreman", department: "Field", location: "Yard", managerId: "p-amina", startDate: "2023-01-16", mfa: false, phone: true },
+  { id: "p-sam", name: "Paige Dalton", role: "Estimator", department: "Office", location: "Main office", managerId: "p-evan", startDate: "2020-11-09", device: "desktop" },
+  { id: "p-leah", name: "Imani Shah", role: "Bookkeeper", department: "Finance", location: "Main office", managerId: "p-jonah", startDate: "2021-05-03" },
+  { id: "p-wes", name: "Miles Okonkwo", role: "Estimator", department: "Office", location: "Main office", managerId: "p-evan", startDate: "2022-02-14" },
+  { id: "p-dana", name: "Elena Frost", role: "Project coordinator", department: "Office", location: "Yard", managerId: "p-evan", startDate: "2022-09-01", status: "Offboarding", device: "desktop" },
+  { id: "p-imani", name: "Felix Hart", role: "Field foreman", department: "Field", location: "Yard", managerId: "p-neil", startDate: "2019-12-02", device: "old" },
+  { id: "p-theo", name: "Theo Lang", role: "Project manager", department: "Field", location: "Parkcenter trailer", managerId: "p-priya", startDate: "2026-10-06", status: "Onboarding", mfa: false, tablet: true },
+  { id: "p-grace", name: "Cora Nguyen", role: "Estimator", department: "Office", location: "Main office", managerId: "p-evan", startDate: "2023-04-18" },
+  { id: "p-neil", name: "Neil Soto", role: "Yard lead", department: "Operations", location: "Yard", managerId: "p-priya", startDate: "2014-10-20", phone: true },
+  { id: "p-rosa", name: "Rosa Bennett", role: "Field foreman", department: "Field", location: "Main office", managerId: "p-neil", startDate: "2024-01-08" },
 ];
 
-function larkspurDepartment(index: number): Person["department"] {
-  if (index < 34) return "Clinical";
-  if (index < 45) return "Client care";
-  if (index < 55) return "Operations";
-  if (index < 63) return "Finance";
-  return "Leadership";
+const graniteSites = ["Main office", "Yard", "River Street trailer", "State Street trailer", "Parkcenter trailer"];
+
+function graniteDepartment(index: number): Person["department"] {
+  if (index < 38) return "Field";
+  if (index < 52) return "Office";
+  if (index < 62) return "Operations";
+  return "Finance";
 }
 
-function larkspurRole(department: Person["department"]): string {
-  if (department === "Clinical") return "Veterinary assistant";
-  if (department === "Client care") return "Client care";
-  if (department === "Finance") return "Finance assistant";
-  if (department === "Leadership") return "Partner";
-  return "Operations assistant";
+function graniteRole(department: Person["department"]): string {
+  if (department === "Field") return "Field foreman";
+  if (department === "Office") return "Project coordinator";
+  if (department === "Finance") return "Accounting";
+  return "Coordinator";
 }
 
-function larkspurLocation(index: number): string {
-  return ["Asheville", "Hickory", "Greenville"][index % 3];
-}
-
-function larkspurManager(department: Person["department"], location: string): string {
-  if (department === "Leadership") return "p-mara";
+function graniteManager(department: Person["department"]): string {
+  if (department === "Office") return "p-evan";
   if (department === "Finance") return "p-jonah";
-  if (department === "Client care") return "p-evan";
-  if (department === "Operations") return location === "Hickory" ? "p-nora" : "p-priya";
-  if (location === "Greenville") return "p-luis";
-  if (location === "Hickory") return "p-chris";
-  return "p-helen";
+  if (department === "Operations") return "p-priya";
+  return "p-amina";
 }
 
-function buildLarkspurPeople(): Person[] {
-  const prices = { m365: 26, pims: 80, acrobat: 86 };
-  const named = larkspurNamed.map((spec, index) =>
-    buildPerson(spec, "larkspur.example", (location) => (location === "Greenville" ? "864" : "828"), index, "Aviary", prices, "entra"),
-  );
-  const generated = firstNames.map((first, index) => {
-    const department = larkspurDepartment(index);
-    const location = larkspurLocation(index);
-    const startYear = 2017 + (index % 8);
-    const startMonth = String((index % 12) + 1).padStart(2, "0");
-    const noMfa = [4, 12, 20, 28, 36].includes(index);
-    const status: Person["status"] = index === 8 ? "Onboarding" : index === 50 ? "Offboarding" : "Active";
-    return buildPerson(
-      {
-        id: `p-l-${index + 21}`,
-        name: `${first} ${lastNames[index % lastNames.length]}`,
-        role: larkspurRole(department),
-        department,
-        location,
-        managerId: larkspurManager(department, location),
-        startDate: `${startYear}-${startMonth}-06`,
-        status,
-        mfa: status === "Active" ? !noMfa : false,
-        training: index % 17 === 0 ? "Overdue" : "Current",
-        device: index % 13 === 0 ? "old" : department === "Client care" ? "desktop" : "laptop",
-      },
-      "larkspur.example",
-      (loc) => (loc === "Greenville" ? "864" : "828"),
-      index + 21,
-      "Aviary",
-      prices,
-      "entra",
-    );
+function buildGranitePeople(): Person[] {
+  const prices: Prices = { m365: 26, field: 80, bluebeam: 40, books: 150 };
+  const named = graniteNamed.map((spec, index) => buildPerson(spec, "granitepeak.example", index, "Procore", "Sage 300", prices, "entra"));
+  const generated = Array.from({ length: 70 }, (_, index) => {
+    const department = graniteDepartment(index);
+    const location = graniteSites[index % graniteSites.length];
+    const spec: Named = {
+      id: `p-g${index}`,
+      name: `${firstNames[index % firstNames.length]} ${lastNames[index % lastNames.length]}`,
+      role: graniteRole(department),
+      department,
+      location,
+      managerId: graniteManager(department),
+      startDate: `${2018 + (index % 7)}-0${(index % 8) + 1}-12`.replace("-010", "-10").replace("-011", "-11"),
+      mfa: ![4, 12, 20, 28, 36].includes(index),
+      device: index % 13 === 0 ? "old" : department === "Office" ? "desktop" : "laptop",
+      phone: department === "Field" && index % 2 === 0,
+    };
+    return buildPerson(spec, "granitepeak.example", index + 20, "Procore", "Sage 300", prices, "entra");
   });
   return [...named, ...generated];
 }
 
-const southNamed: Named[] = [
-  { id: "p-camille", name: "Camille Ward", role: "Owner", department: "Leadership", location: "Spartanburg", managerId: null, startDate: "2013-05-01", phone: true },
-  { id: "p-jordan", name: "Jordan Hale", role: "Client care lead", department: "Client care", location: "Spartanburg", managerId: "p-camille", startDate: "2019-04-12", device: "desktop", phone: true },
-  { id: "p-miles", name: "Miles Harlow", role: "Veterinarian", department: "Clinical", location: "Spartanburg", managerId: "p-camille", startDate: "2017-09-18", tablet: true, phone: true },
-  { id: "p-adele", name: "Adele Franco", role: "Practice manager", department: "Operations", location: "Spartanburg", managerId: "p-camille", startDate: "2020-02-03", phone: true },
-  { id: "p-hassan", name: "Hassan Rahman", role: "Bookkeeper", department: "Finance", location: "Spartanburg", managerId: "p-camille", startDate: "2021-06-21" },
+const redlineNamed: Named[] = [
+  { id: "p-camille", name: "Harper Quinn", role: "Owner", department: "Leadership", location: "Office", managerId: null, startDate: "2009-06-01", phone: true },
+  { id: "p-adele", name: "Sasha Petrova", role: "Operations manager", department: "Operations", location: "Office", managerId: "p-camille", startDate: "2017-03-20", phone: true },
+  { id: "p-jordan", name: "Riley Chen", role: "Office manager", department: "Office", location: "Office", managerId: "p-adele", startDate: "2019-08-12", device: "desktop", phone: true },
+  { id: "p-miles", name: "Andre Cole", role: "Superintendent", department: "Field", location: "Addison trailer", managerId: "p-adele", startDate: "2016-11-04", tablet: true, phone: true },
+  { id: "p-hassan", name: "Hassan Rahman", role: "Accounting lead", department: "Finance", location: "Office", managerId: "p-camille", startDate: "2020-01-27" },
+  { id: "p-r1", name: "Bea Lang", role: "Estimator", department: "Office", location: "Office", managerId: "p-jordan", startDate: "2021-09-14" },
+  { id: "p-r2", name: "Ivan Cross", role: "Field foreman", department: "Field", location: "Yard", managerId: "p-miles", startDate: "2018-04-02", phone: true },
+  { id: "p-r3", name: "Nia Holt", role: "Safety coordinator", department: "Operations", location: "Yard", managerId: "p-adele", startDate: "2022-06-06" },
 ];
 
-const southRest = [
-  ["Nina", "Clinical", "Veterinary technician"],
-  ["Paul", "Clinical", "Veterinary technician"],
-  ["Celia", "Clinical", "Veterinary assistant"],
-  ["Mark", "Clinical", "Veterinary assistant"],
-  ["Ivy", "Clinical", "Veterinary assistant"],
-  ["Omar", "Clinical", "Kennel lead"],
-  ["Faye", "Clinical", "Veterinary assistant"],
-  ["Ian", "Client care", "Client care"],
-  ["Kira", "Client care", "Client care"],
-  ["Bea", "Client care", "Client care"],
-  ["Hugo", "Operations", "Facilities"],
-  ["Ruthann", "Operations", "Inventory"],
-  ["Leif", "Clinical", "Veterinary technician"],
-  ["Nia", "Clinical", "Veterinary assistant"],
-  ["Seth", "Finance", "Finance assistant"],
-  ["Willa", "Leadership", "Associate owner"],
-  ["Gideon", "Clinical", "Relief technician"],
-] as const;
-
-function buildSouthPeople(): Person[] {
-  const prices = { m365: 22, pims: 70, acrobat: 45 };
-  const named = southNamed.map((spec, index) =>
-    buildPerson(spec, "southridge.example", () => "864", index, "Meadow", prices, "google"),
-  );
-  const generated = southRest.map((row, index) =>
-    buildPerson(
-      {
-        id: `p-sr-${index + 6}`,
-        name: `${row[0]} ${lastNames[(index + 3) % lastNames.length]}`,
-        role: row[2],
-        department: row[1],
-        location: "Spartanburg",
-        managerId: row[1] === "Clinical" ? "p-miles" : row[1] === "Client care" ? "p-jordan" : "p-camille",
-        startDate: `${2018 + (index % 6)}-0${(index % 8) + 1}-04`.replace("-010", "-10").replace("-011", "-11"),
-        mfa: index !== 4,
-        device: row[1] === "Client care" ? "desktop" : index === 10 ? "old" : "laptop",
-        status: index === 16 ? "Onboarding" : "Active",
-      },
-      "southridge.example",
-      () => "864",
-      index + 6,
-      "Meadow",
-      prices,
-      "google",
-    ),
-  );
+function buildRedlinePeople(): Person[] {
+  const prices: Prices = { m365: 22, field: 70, bluebeam: 35, books: 90 };
+  const rows: [string, Person["department"], string][] = [
+    ["Nina", "Field", "Field foreman"],
+    ["Paul", "Field", "Field foreman"],
+    ["Celia", "Field", "Field foreman"],
+    ["Mark", "Office", "Project coordinator"],
+    ["Ivy", "Field", "Field foreman"],
+    ["Omar", "Field", "Field foreman"],
+    ["Faye", "Finance", "Accounting"],
+    ["Ian", "Office", "Estimator"],
+    ["Kira", "Field", "Field foreman"],
+    ["Leif", "Field", "Field foreman"],
+    ["Gideon", "Operations", "Coordinator"],
+    ["Priya", "Field", "Field foreman"],
+    ["Noah", "Field", "Field foreman"],
+    ["Elena", "Office", "Project coordinator"],
+    ["Seth", "Field", "Field foreman"],
+    ["Maya", "Finance", "Accounting"],
+    ["Colin", "Field", "Field foreman"],
+    ["Aria", "Field", "Field foreman"],
+    ["Jonah", "Office", "Estimator"],
+    ["Tess", "Field", "Field foreman"],
+    ["Hugo", "Operations", "Coordinator"],
+    ["Lila", "Field", "Field foreman"],
+    ["Dean", "Field", "Field foreman"],
+    ["Vera", "Finance", "Accounting"],
+    ["Owen", "Field", "Field foreman"],
+    ["Cora", "Office", "Project coordinator"],
+    ["Felix", "Field", "Field foreman"],
+  ];
+  const sites = ["Office", "Yard", "Addison trailer"];
+  const named = redlineNamed.map((spec, index) => buildPerson(spec, "redlinepaving.example", index, "Procore", "QuickBooks", prices, "google"));
+  const generated = rows.map((row, index) => {
+    const spec: Named = {
+      id: `p-s${index}`,
+      name: `${row[0]} ${lastNames[(index + 3) % lastNames.length]}`,
+      role: row[2],
+      department: row[1],
+      location: sites[index % sites.length],
+      managerId: row[1] === "Field" ? "p-miles" : row[1] === "Office" ? "p-jordan" : row[1] === "Finance" ? "p-hassan" : "p-adele",
+      startDate: `${2019 + (index % 6)}-0${(index % 8) + 1}-08`.replace("-010", "-10").replace("-011", "-11"),
+      mfa: index !== 4,
+      device: row[1] === "Office" ? "desktop" : index === 10 ? "old" : "laptop",
+    };
+    return buildPerson(spec, "redlinepaving.example", index + 8, "Procore", "QuickBooks", prices, "google");
+  });
   return [...named, ...generated];
 }
 
@@ -330,7 +301,6 @@ function ticket(
   respondBy: number,
   resolveBy: number,
   messages: TicketMessage[],
-  attachments: Ticket["attachments"] = [],
 ): Ticket {
   return {
     id,
@@ -346,97 +316,92 @@ function ticket(
     respondBy: demoIso(respondBy),
     resolveBy: demoIso(resolveBy),
     messages,
-    attachments,
+    attachments: [],
   };
 }
 
-function larkspurTickets(): Ticket[] {
+function graniteTickets(): Ticket[] {
   return [
-    ticket("larkspur", "LS-1052", "Shared inbox is not showing new appointment mail", "Software", "Normal", "Open", "p-evan", -20 * hour, -6 * hour, 4 * hour, 28 * hour, [
-      message("m1", "Evan Cho", -20 * hour, "The front desk shared mailbox stopped showing messages that clients send from the appointment form. Personal mail still arrives."),
-      message("m2", "Talon Support", -6 * hour, "The rule that files those messages was pointing at a folder Evan cannot see. Checking the mailbox permissions next."),
+    ticket(GRANITE, "GP-1052", "Bid inbox is not showing new mail", "Software", "Normal", "Open", "p-evan", -20 * hour, -6 * hour, 4 * hour, 28 * hour, [
+      message("m1", "Nina Cho", -20 * hour, "The bid inbox stopped showing mail that estimators forward from the website form."),
+      message("m2", "Talon Support", -6 * hour, "The rule was pointed at a folder Nina cannot see. Checking the mailbox permissions next."),
     ]),
-    ticket("larkspur", "LS-1048", "Owen is locked out of Aviary", "Access", "High", "Open", "p-owen", -26 * hour, -3 * hour, -2 * hour, 8 * hour, [
-      message("m1", "Owen Blake", -26 * hour, "I cannot finish the MFA prompt. Aviary sends me back to the sign-in page."),
-      message("m2", "Helen Brooks", -18 * hour, "He is on the surgery board tomorrow. He needs a working login before 7."),
-      message("m3", "Talon Support", -3 * hour, "The authenticator app was registered to an old phone. A new registration is ready when Owen is at the desk.", true),
+    ticket(GRANITE, "GP-1048", "Kyle is locked out of Procore", "Access", "High", "Open", "p-owen", -26 * hour, -3 * hour, -2 * hour, 8 * hour, [
+      message("m1", "Kyle Brooks", -26 * hour, "I cannot finish the MFA prompt. Procore sends me back to the sign-in page."),
+      message("m2", "Talon Support", -3 * hour, "The prompt is waiting on the phone Kyle left in the yard truck."),
     ]),
-    ticket("larkspur", "LS-1044", "Greenville pharmacy label printer is offline", "Hardware", "High", "Waiting", "p-ruth", -70 * hour, -12 * hour, -60 * hour, 20 * hour, [
-      message("m1", "Ruth Adler", -70 * hour, "The Dymo at the pharmacy desk prints a blank label, then goes offline. It started after the paper change."),
-      message("m2", "Talon Support", -12 * hour, "The spooler is holding a bad job. We need someone at the clinic to power-cycle it while we watch."),
-    ], [{ name: "printer-blank-label.jpg", size: "840 KB" }]),
-    ticket("larkspur", "LS-1041", "Theo Marsh first-week accounts", "Onboarding", "Normal", "In progress", "p-priya", -80 * hour, -8 * hour, -70 * hour, 30 * hour, [
-      message("m1", "Priya Shah", -80 * hour, "Theo starts at Greenville this week. He has a mailbox. Aviary and MFA are still open."),
-      message("m2", "Talon Support", -8 * hour, "Mailbox is done. Aviary seat is assigned. MFA is waiting on Theo, which matches the onboarding checklist."),
+    ticket(GRANITE, "GP-1044", "State Street trailer internet is down", "Hardware", "High", "Waiting", "p-ruth", -70 * hour, -12 * hour, -60 * hour, 20 * hour, [
+      message("m1", "Omar Reid", -70 * hour, "The State Street trailer has no internet. The LTE kit shows no signal."),
+      message("m2", "Talon Support", -12 * hour, "The kit needs a power cycle on site while we watch the failover."),
     ]),
-    ticket("larkspur", "LS-1036", "Dana Cho last day Friday", "Offboarding", "High", "Open", "p-priya", -40 * hour, -5 * hour, -20 * hour, 50 * hour, [
-      message("m1", "Evan Cho", -40 * hour, "Dana's last day is Friday. Please close the mailbox, Aviary, and the Hickory door badge that afternoon."),
-      message("m2", "Talon Support", -5 * hour, "Scheduled for Friday at 4. The license should not stay on after that.", true),
+    ticket(GRANITE, "GP-1041", "Procore access for Theo Lang", "Onboarding", "Normal", "In progress", "p-priya", -80 * hour, -8 * hour, -70 * hour, 30 * hour, [
+      message("m1", "Ren Alvarez", -80 * hour, "Theo starts as a project manager at Parkcenter this week. He needs mail and Procore."),
+      message("m2", "Talon Support", -8 * hour, "Mailbox is done. Procore seat is assigned. MFA is waiting on Theo."),
     ]),
-    ticket("larkspur", "LS-1033", "Hickory reminders went to the wrong list", "Software", "Normal", "Resolved", "p-chris", -140 * hour, -110 * hour, -130 * hour, -100 * hour, [
-      message("m1", "Chris Nguyen", -140 * hour, "Tuesday reminders went to last year's list. Clients called about appointments they already had."),
-      message("m2", "Talon Support", -110 * hour, "The list was pointed back at the current Aviary export. A test reminder to the desk succeeded."),
+    ticket(GRANITE, "GP-1036", "Elena Frost last day Friday", "Offboarding", "High", "Open", "p-priya", -40 * hour, -5 * hour, -20 * hour, 50 * hour, [
+      message("m1", "Ren Alvarez", -40 * hour, "Elena's last day is Friday. Close the mailbox, Bluebeam, and the yard gate badge that afternoon."),
     ]),
-    ticket("larkspur", "LS-1028", "Shared login on the Greenville lab PC", "Security", "High", "In progress", "p-luis", -90 * hour, -9 * hour, -80 * hour, 12 * hour, [
-      message("m1", "Luis Vega", -90 * hour, "The lab PC still uses one shared Windows login. Techs know the password."),
-      message("m2", "Talon Support", -9 * hour, "Named accounts are created. The shared login comes off after Thursday's lab block.", true),
+    ticket(GRANITE, "GP-1033", "Main office plotter will not print a set", "Hardware", "Normal", "Resolved", "p-sam", -140 * hour, -110 * hour, -130 * hour, -100 * hour, [
+      message("m1", "Paige Dalton", -140 * hour, "The plotter stops halfway through a 24x36 set."),
+      message("m2", "Talon Support", -110 * hour, "A bad job was stuck in the queue. A test set printed."),
     ]),
-    ticket("larkspur", "LS-1022", "Relief vet needs Aviary for Saturday", "Access", "Normal", "Waiting", "p-helen", -30 * hour, -10 * hour, -16 * hour, 40 * hour, [
-      message("m1", "Helen Brooks", -30 * hour, "A relief veterinarian is in Asheville on Saturday. She needs Aviary for the day only."),
-      message("m2", "Talon Support", -10 * hour, "Waiting on the legal name and mobile number before the temporary account is created."),
+    ticket(GRANITE, "GP-1028", "Tablet for a superintendent", "Hardware", "Normal", "In progress", "p-luis", -90 * hour, -9 * hour, -80 * hour, 12 * hour, [
+      message("m1", "Andre Vega", -90 * hour, "Luis needs a field tablet at the River Street trailer. His current one will not hold a charge."),
     ]),
-    ticket("larkspur", "LS-1009", "Cedar results are not filing into Aviary", "Software", "Urgent", "Open", "p-amina", -50 * hour, -2 * hour, -40 * hour, -6 * hour, [
-      message("m1", "Amina Diallo", -50 * hour, "Lab results since Monday are sitting in the Cedar portal. They are not on the patient chart."),
-      message("m2", "Talon Support", -2 * hour, "The interface credential expired on the 19th. Cedar has been asked for a new one. Charts are being checked by hand until it is back."),
+    ticket(GRANITE, "GP-1022", "Bluebeam seat for a new estimator", "Access", "Normal", "Waiting", "p-wes", -30 * hour, -10 * hour, -16 * hour, 40 * hour, [
+      message("m1", "Miles Okonkwo", -30 * hour, "Cora needs Bluebeam on the estimating PC before the Friday bid."),
     ]),
-    ticket("larkspur", "LS-1004", "Leah's password reset", "Access", "Low", "Resolved", "p-leah", -200 * hour, -190 * hour, -196 * hour, -170 * hour, [
-      message("m1", "Leah Ortiz", -200 * hour, "I am locked out of Microsoft 365 after a password change."),
-      message("m2", "Talon Support", -190 * hour, "Reset completed. MFA was already on the account, so mail is back."),
+    ticket(GRANITE, "GP-1009", "Sage job cost export failed", "Software", "Urgent", "Open", "p-jonah", -50 * hour, -2 * hour, -40 * hour, -6 * hour, [
+      message("m1", "Wes Calder", -50 * hour, "Yesterday's Procore costs did not land in Sage 300."),
+      message("m2", "Talon Support", -2 * hour, "The sync credential expired. A new one is with Sage. Costs are being checked by hand until it is back."),
     ]),
-    ticket("larkspur", "LS-0998", "Hickory exam room PC is due for replacement", "Hardware", "Normal", "In progress", "p-imani", -160 * hour, -24 * hour, -150 * hour, 60 * hour, [
-      message("m1", "Imani Reed", -160 * hour, "Exam room 2 takes several minutes to open a chart. The laptop is from 2021."),
-      message("m2", "Talon Support", -24 * hour, "It is on the Hickory refresh list. A replacement is staged for the next clinic visit."),
+    ticket(GRANITE, "GP-1004", "Imani password reset", "Access", "Low", "Resolved", "p-leah", -200 * hour, -190 * hour, -196 * hour, -170 * hour, [
+      message("m1", "Imani Shah", -200 * hour, "I am locked out of email."),
+      message("m2", "Talon Support", -190 * hour, "Password reset in person. She signed in."),
     ]),
-    ticket("larkspur", "LS-0991", "Two Saturday techs start November 2", "Onboarding", "Normal", "Waiting", "p-priya", -15 * hour, -4 * hour, 8 * hour, 200 * hour, [
-      message("m1", "Priya Shah", -15 * hour, "Two technician hires start at Hickory on November 2. Names are in the hiring packet."),
+    ticket(GRANITE, "GP-0998", "Yard laptop is due for replacement", "Hardware", "Normal", "In progress", "p-imani", -160 * hour, -24 * hour, -150 * hour, 60 * hour, [
+      message("m1", "Felix Hart", -160 * hour, "The yard laptop from 2021 takes several minutes to open a plan set."),
+    ]),
+    ticket(GRANITE, "GP-0991", "Two foremen start November 2", "Onboarding", "Normal", "Waiting", "p-priya", -15 * hour, -4 * hour, 8 * hour, 200 * hour, [
+      message("m1", "Ren Alvarez", -15 * hour, "Two foremen start at the yard on November 2. Names are in the hiring packet."),
       message("m2", "Talon Support", -4 * hour, "Waiting on personal email addresses before the accounts are created."),
     ]),
   ];
 }
 
-function southTickets(): Ticket[] {
+function redlineTickets(): Ticket[] {
   return [
-    ticket("south-ridge", "SR-188", "Dental PC imaging viewer will not open", "Software", "High", "Open", "p-miles", -18 * hour, -3 * hour, 2 * hour, 24 * hour, [
-      message("m1", "Miles Harlow", -18 * hour, "The viewer on the dental PC opens a gray window and stops. We have two dentals this afternoon."),
-      message("m2", "Talon Support", -3 * hour, "The viewer is pinned to an old display driver. A reinstall is ready for the lunch break."),
+    ticket(REDLINE, "RC-188", "Addison trailer internet is down", "Hardware", "High", "Open", "p-miles", -18 * hour, -3 * hour, 2 * hour, 24 * hour, [
+      message("m1", "Andre Cole", -18 * hour, "The Addison trailer lost internet before the pour. The LTE light is red."),
+      message("m2", "Talon Support", -3 * hour, "Failover to the backup SIM is staged for the lunch break."),
     ]),
-    ticket("south-ridge", "SR-184", "New receptionist needs Google Workspace", "Access", "Normal", "In progress", "p-jordan", -60 * hour, -8 * hour, -40 * hour, 36 * hour, [
-      message("m1", "Jordan Hale", -60 * hour, "Our new receptionist starts Thursday. She needs mail and the shared inbox, not Meadow yet."),
+    ticket(REDLINE, "RC-184", "New estimator needs Google Workspace", "Access", "Normal", "In progress", "p-jordan", -60 * hour, -8 * hour, -40 * hour, 36 * hour, [
+      message("m1", "Riley Chen", -60 * hour, "Our new estimator starts Thursday. She needs mail and the shared bid inbox."),
       message("m2", "Talon Support", -8 * hour, "Mailbox is created. MFA enrollment is the remaining step."),
     ]),
-    ticket("south-ridge", "SR-179", "Front desk phone stuck on hold", "Hardware", "Normal", "Resolved", "p-jordan", -220 * hour, -200 * hour, -210 * hour, -180 * hour, [
-      message("m1", "Jordan Hale", -220 * hour, "The front desk set keeps a caller on hold after we hang up."),
-      message("m2", "Talon Support", -200 * hour, "The handset was replaced. A test call cleared the hold."),
+    ticket(REDLINE, "RC-179", "Yard phone stuck on hold", "Hardware", "Normal", "Resolved", "p-jordan", -220 * hour, -200 * hour, -210 * hour, -180 * hour, [
+      message("m1", "Riley Chen", -220 * hour, "The yard phone keeps a caller on hold after we hang up."),
+      message("m2", "Talon Support", -200 * hour, "The handset was replaced. A test call cleared."),
     ]),
-    ticket("south-ridge", "SR-170", "Owner MFA prompt on a new phone", "Security", "Normal", "Waiting", "p-camille", -30 * hour, -6 * hour, -10 * hour, 48 * hour, [
-      message("m1", "Camille Ward", -30 * hour, "I replaced my phone and the MFA prompt never arrives."),
-      message("m2", "Talon Support", -6 * hour, "Waiting until Camille is in the office so the old registration can be removed in person."),
+    ticket(REDLINE, "RC-170", "Owner MFA prompt on a new phone", "Access", "Normal", "Waiting", "p-camille", -30 * hour, -6 * hour, -10 * hour, 48 * hour, [
+      message("m1", "Harper Quinn", -30 * hour, "I replaced my phone and the MFA prompt never arrives."),
+      message("m2", "Talon Support", -6 * hour, "Waiting until Harper is in the office so the old registration can be removed in person."),
     ]),
-    ticket("south-ridge", "SR-166", "Reminder texts went out a day late", "Software", "Low", "Resolved", "p-adele", -300 * hour, -260 * hour, -290 * hour, -240 * hour, [
-      message("m1", "Adele Franco", -300 * hour, "Saturday reminder texts arrived on Sunday."),
-      message("m2", "Talon Support", -260 * hour, "The send window was set to the wrong timezone. It is back on Eastern time."),
+    ticket(REDLINE, "RC-166", "Timekeeping punches posted a day late", "Software", "Low", "Resolved", "p-adele", -300 * hour, -260 * hour, -290 * hour, -240 * hour, [
+      message("m1", "Sasha Petrova", -300 * hour, "Saturday crew punches showed up on Sunday."),
+      message("m2", "Talon Support", -260 * hour, "The send window was on the wrong timezone. It is back on Mountain time."),
     ]),
   ];
 }
 
 export function liveTicket(workspaceId: string): Ticket {
-  if (workspaceId === "south-ridge") {
-    return ticket("south-ridge", "SR-191", "Appointment confirmations are stuck in the outbox", "Software", "Normal", "Open", "p-jordan", 0, 0, 4 * hour, 24 * hour, [
-      message("m1", "Jordan Hale", 0, "Confirmations for tomorrow are sitting in the outbox and have not gone out."),
+  if (workspaceId === REDLINE) {
+    return ticket(REDLINE, "RC-191", "Bid confirmations are stuck in the outbox", "Software", "Normal", "Open", "p-jordan", 0, 0, 4 * hour, 24 * hour, [
+      message("m1", "Riley Chen", 0, "Confirmations for tomorrow's bids are sitting in the outbox."),
     ]);
   }
-  return ticket("larkspur", "LS-1096", "Greenville pharmacy printer jammed again", "Hardware", "Normal", "Open", "p-sam", 0, 0, 4 * hour, 24 * hour, [
-    message("m1", "Sam Ibarra", 0, "The pharmacy printer jammed mid-label. The queue at the desk is backing up."),
+  return ticket(GRANITE, "GP-1096", "Main office plotter jammed again", "Hardware", "Normal", "Open", "p-sam", 0, 0, 4 * hour, 24 * hour, [
+    message("m1", "Paige Dalton", 0, "The plotter jammed mid-set. The bid room queue is backing up."),
   ]);
 }
 
@@ -447,44 +412,9 @@ const articles: Article[] = [
     category: "Accounts",
     reviewed: "2026-09-12",
     owner: "Talon Support",
-    summary: "Mailbox, Aviary or Meadow, and MFA before the first shift.",
-    body: [
-      "Send the start date, clinic, role, and personal email. Accounts are created the business day before, not the morning of.",
-      "Every hire gets Microsoft 365. Clinical hires also get the practice system: Aviary at Larkspur, Meadow at South Ridge. Client care gets the shared mailbox for that clinic.",
-      "MFA is enrolled before the temporary password is handed over. A hire without MFA does not get a badge code.",
-      "The hiring manager confirms the person can open mail and the practice system on the first morning. That confirmation closes the ticket.",
-    ],
-    related: ["mfa-setup", "offboarding"],
-  },
-  {
-    slug: "offboarding",
-    title: "Offboarding",
-    category: "Accounts",
-    reviewed: "2026-08-28",
-    owner: "Talon Support",
-    summary: "Mailbox, practice system, and door badge close on the last day.",
-    body: [
-      "The manager opens the ticket with the last day and the clinic. Same-day notice is enough. A week of leftover access is not.",
-      "On the last afternoon: block sign-in, remove the practice-system seat, forward the mailbox to the clinic lead for 30 days, and remove the door badge.",
-      "A person who is gone and still licensed shows up on the people flags. That license comes off the same day the flag appears.",
-      "Equipment goes to the clinic coordinator. Do not wipe a laptop before the coordinator has the charger.",
-    ],
-    related: ["onboarding-a-new-hire", "vendor-contacts"],
-  },
-  {
-    slug: "mfa-setup",
-    title: "MFA setup",
-    category: "Security",
-    reviewed: "2026-10-02",
-    owner: "Talon Support",
-    summary: "The authenticator app is the method. Text messages are the backup.",
-    body: [
-      "Install the authenticator app on the phone the person has with them at work. Scan the code while signed in on the clinic PC.",
-      "Add a text-message backup only after the app works. The backup number is the personal mobile, not the front desk line.",
-      "A lost phone is an access ticket. The old registration is removed while the person is in the clinic, not from a chat message.",
-      "Shared logins do not get a shared MFA code. If a PC has one login for several people, that is a security ticket.",
-    ],
-    related: ["password-reset", "incident-response"],
+    summary: "Mailbox, Procore, and MFA before the first day.",
+    body: ["Send the start date, location, role, and personal email."],
+    related: ["mfa-setup"],
   },
   {
     slug: "password-reset",
@@ -492,129 +422,9 @@ const articles: Article[] = [
     category: "Accounts",
     reviewed: "2026-07-16",
     owner: "Talon Support",
-    summary: "Reset the password, then check MFA, then have the person sign in once.",
-    body: [
-      "Open an access ticket. Include the clinic and whether the person can reach their phone.",
-      "The temporary password is given in person or by a phone call to the number on the person record. It is not sent to the mailbox that is locked.",
-      "If MFA is not enrolled, enroll it before the person leaves the desk. A reset without MFA comes back the same week.",
-      "The person signs in once before the ticket is closed.",
-    ],
-    related: ["mfa-setup", "onboarding-a-new-hire"],
-  },
-  {
-    slug: "printer-setup",
-    title: "Printer setup",
-    category: "Devices",
-    reviewed: "2026-06-04",
-    owner: "Talon Support",
-    summary: "Which clinic, which room, and a photo of the error.",
-    body: [
-      "Label printers and letter printers are different queues. Say which one. The Greenville pharmacy printer is the label printer.",
-      "Power-cycle the printer before opening a ticket if the lamp is amber. If it jams again, open the ticket and attach a photo.",
-      "Do not install a printer driver from a search result. The driver is the one already on the clinic file share.",
-      "A printer that fails every week is a hardware ticket with the replacement noted, not a new setup each time.",
-    ],
-    related: ["incident-response", "vendor-contacts"],
-  },
-  {
-    slug: "incident-response",
-    title: "Incident response",
-    category: "Security",
-    reviewed: "2026-09-30",
-    owner: "Talon Support",
-    summary: "Who to call, what to unplug, and what not to email.",
-    body: [
-      "If a clinic cannot chart or cannot take payments, call Talon and open a security or software ticket with the clinic name in the subject.",
-      "Unplug the affected PC from the network if someone is unsure about a popup that asks for a password. Leave it powered on.",
-      "Do not forward the suspicious message to the whole clinic. Forward one copy to Talon and delete the rest.",
-      "Backups run nightly. A restore is a decision, not a button on the front desk. Greenville's restore test is overdue and is tracked on the security page.",
-    ],
-    related: ["mfa-setup", "vendor-contacts"],
-  },
-  {
-    slug: "vendor-contacts",
-    title: "Vendor contacts",
-    category: "Vendors",
-    reviewed: "2026-10-08",
-    owner: "Talon Support",
-    summary: "Who bills the clinics, and which renewal is actually a decision.",
-    body: [
-      "Microsoft 365, Aviary or Meadow, Cedar Diagnostics, Bramble phones, Clearwell backup, and ThreatDown endpoint are the contracts that matter.",
-      "Cedar Diagnostics is the renewal in front of Larkspur. The lab interface is the only one in use. A decision is due before November 12.",
-      "Do not start a second backup product or a second phone system to solve one clinic's problem. Add the note to the open ticket instead.",
-      "Vendor login pages are listed on the company page. Passwords for those portals stay with Talon and the practice manager.",
-    ],
-    related: ["incident-response", "offboarding"],
-  },
-  {
-    slug: "wifi-and-vpn",
-    title: "Wi-Fi and VPN",
-    category: "Devices",
-    reviewed: "2026-09-02",
-    owner: "Talon Support",
-    summary: "Clinic Wi-Fi, guest Wi-Fi, and the VPN when someone is off site.",
-    body: [
-      "Use the clinic network named on the card at the desk. Guest Wi-Fi is a different name and does not reach the printers.",
-      "Forget the network and join it again before opening a ticket. A VPN is only for someone working away from the clinic.",
-      "The visitor network is a different name. It is not the staff password, and it does not reach the printers.",
-    ],
-    related: ["printer-setup", "slow-computer"],
-  },
-  {
-    slug: "outlook-mail",
-    title: "Outlook and Gmail",
-    category: "Accounts",
-    reviewed: "2026-08-19",
-    owner: "Talon Support",
-    summary: "When mail is missing, check the folder rule before resetting the password.",
-    body: [
-      "Larkspur mail is Outlook and Microsoft 365. South Ridge mail is Gmail. The steps are the same: confirm the right mailbox, then the focused or filtered view, then a stuck rule.",
-      "Appointment mail belongs in the shared clinic mailbox, not a personal folder.",
-      "A password reset is the access guide. Do not create a second mailbox to get around a rule.",
-    ],
-    related: ["password-reset", "wifi-and-vpn"],
-  },
-  {
-    slug: "meeting-audio",
-    title: "Teams and Meet audio",
-    category: "Devices",
-    reviewed: "2026-07-22",
-    owner: "Talon Support",
-    summary: "Pick the headset, then the app, then the call.",
-    body: [
-      "Larkspur uses Teams. South Ridge uses Meet. Plug the headset in before the meeting starts.",
-      "In the app, choose the headset for both microphone and speaker. The laptop speakers are the usual mistake.",
-      "If the other clinics can hear you and you cannot hear them, it is the output device, not the account.",
-    ],
-    related: ["slow-computer", "printer-setup"],
-  },
-  {
-    slug: "slow-computer",
-    title: "Slow computer",
-    category: "Devices",
-    reviewed: "2026-10-01",
-    owner: "Talon Support",
-    summary: "Restart, check patch status, then look at the age of the machine.",
-    body: [
-      "Restart the PC and leave it on the clinic network for ten minutes so patches can finish.",
-      "The person page shows patch status. Pending means updates are waiting. Behind means the machine has missed more than one cycle.",
-      "A laptop from 2021 that is still slow after a restart belongs on the hardware refresh, not a new software ticket every week.",
-    ],
-    related: ["printer-setup", "mfa-setup"],
-  },
-  {
-    slug: "report-phishing",
-    title: "Report a phishing email",
-    category: "Security",
-    reviewed: "2026-09-18",
-    owner: "Talon Support",
-    summary: "Do not forward it to the whole clinic.",
-    body: [
-      "Forward one copy to Talon. Say who it claimed to be and what it asked for. Do not paste passwords or codes.",
-      "Delete the message after that. Do not send it to the rest of the clinic.",
-      "If a mailbox is already sending mail the person did not write, leadership sends the compromised-account notice. A shared login on a lab PC is a separate security ticket.",
-    ],
-    related: ["incident-response", "mfa-setup"],
+    summary: "Reset the password, then check MFA.",
+    body: ["The temporary password is given in person or by a phone call."],
+    related: ["mfa-setup"],
   },
 ];
 
@@ -632,7 +442,8 @@ type Economics = {
 };
 
 function economics(people: Person[], input: {
-  pims: string;
+  fieldSystem: string;
+  books: string;
   retainer: number;
   cloud: { name: string; amount: number }[];
   hardware: { name: string; amount: number }[];
@@ -643,26 +454,24 @@ function economics(people: Person[], input: {
 }): Economics {
   const suite = sumBy(people, "Google Workspace").seats > 0 ? sumBy(people, "Google Workspace") : sumBy(people, "Microsoft 365");
   const suiteName = sumBy(people, "Google Workspace").seats > 0 ? "Google Workspace" : "Microsoft 365";
-  const pims = sumBy(people, input.pims);
-  const acrobat = sumBy(people, "Acrobat");
+  const field = sumBy(people, input.fieldSystem);
+  const bluebeam = sumBy(people, "Bluebeam");
+  const books = sumBy(people, input.books);
   const software: SoftwareContract[] = [
-    { name: suiteName, vendor: suiteName === "Google Workspace" ? "Google" : "Microsoft", monthly: suite.monthly, seats: `${suite.seats} people`, renewal: "2027-01-15", note: suiteName === "Google Workspace" ? "Business Standard, plus the shared mailbox." : "Business Standard, plus the shared mailbox at each clinic." },
-    { name: input.pims, vendor: input.pims === "Aviary" ? "Aviary" : "Meadow", monthly: pims.monthly, seats: `${pims.seats} clinical`, renewal: input.pims === "Aviary" ? "2027-03-01" : "2027-02-01", note: "The charting system. One seat per clinical person." },
-    { name: "Acrobat", vendor: "Adobe", monthly: acrobat.monthly, seats: `${acrobat.seats} finance`, renewal: "2027-04-01", note: "Finance only. Unused seats are called out on the overview." },
+    { name: suiteName, vendor: suiteName === "Google Workspace" ? "Google" : "Microsoft", monthly: suite.monthly, seats: `${suite.seats} people`, renewal: "2027-01-15", note: "Mail and files." },
+    { name: input.fieldSystem, vendor: "Procore", monthly: field.monthly, seats: `${field.seats} field`, renewal: "2027-03-01", note: "Project management." },
+    { name: "Bluebeam", vendor: "Bluebeam", monthly: bluebeam.monthly, seats: `${bluebeam.seats} estimating`, renewal: "2027-04-01", note: "Plan markup." },
+    { name: input.books, vendor: input.books === "QuickBooks" ? "Intuit" : "Sage", monthly: books.monthly, seats: `${books.seats} accounting`, renewal: "2026-12-01", note: "Job cost." },
     ...input.extraSoftware,
   ];
   const softwareMonthly = software.reduce((sum, item) => sum + item.monthly, 0);
-  const cloudMonthly = input.cloud.reduce((sum, item) => sum + item.amount, 0);
-  const hardwareMonthly = input.hardware.reduce((sum, item) => sum + item.amount, 0);
-  const telecomMonthly = input.telecom.reduce((sum, item) => sum + item.amount, 0);
-  const securityMonthly = input.security.reduce((sum, item) => sum + item.amount, 0);
   const breakdown: SpendSlice[] = [
     { name: "Talon retainer", amount: input.retainer, lines: [{ name: "Monthly retainer", amount: input.retainer }] },
     { name: "Software", amount: softwareMonthly, lines: software.map((item) => ({ name: item.name, amount: item.monthly })) },
-    { name: "Cloud and hosting", amount: cloudMonthly, lines: input.cloud },
-    { name: "Hardware", amount: hardwareMonthly, lines: input.hardware },
-    { name: "Telecom", amount: telecomMonthly, lines: input.telecom },
-    { name: "Security tools", amount: securityMonthly, lines: input.security },
+    { name: "Cloud and hosting", amount: input.cloud.reduce((sum, item) => sum + item.amount, 0), lines: input.cloud },
+    { name: "Hardware", amount: input.hardware.reduce((sum, item) => sum + item.amount, 0), lines: input.hardware },
+    { name: "Telecom", amount: input.telecom.reduce((sum, item) => sum + item.amount, 0), lines: input.telecom },
+    { name: "Security tools", amount: input.security.reduce((sum, item) => sum + item.amount, 0), lines: input.security },
   ];
   const vendors: Vendor[] = [
     ...software.map((item) => ({
@@ -673,56 +482,62 @@ function economics(people: Person[], input: {
       contact: `billing@${item.vendor.toLowerCase().replace(/\s+/g, "")}.example`,
       note: item.note,
     })),
-    ...input.cloud.map((item) => ({ name: item.name, category: "Cloud", monthly: item.amount, renewal: "2027-01-01", contact: "accounts@host.example", note: "Hosting and file storage for the clinics." })),
-    ...input.telecom.map((item) => ({ name: item.name, category: "Telecom", monthly: item.amount, renewal: input.renewals[item.name]?.date ?? "2026-12-01", contact: "support@bramble.example", note: input.renewals[item.name]?.note ?? "Clinic internet and phones." })),
-    ...input.security.map((item) => ({ name: item.name, category: "Security", monthly: item.amount, renewal: "2027-05-01", contact: "support@threatdown.example", note: "ThreatDown EDR and mail filtering." })),
+    ...input.cloud.map((item) => ({ name: item.name, category: "Cloud", monthly: item.amount, renewal: "2027-01-01", contact: "accounts@host.example", note: "Hosting and the plan room files." })),
+    ...input.telecom.map((item) => ({ name: item.name, category: "Telecom", monthly: item.amount, renewal: input.renewals[item.name]?.date ?? "2026-12-01", contact: "support@summitvoice.example", note: input.renewals[item.name]?.note ?? "Internet and phones." })),
+    ...input.security.map((item) => ({ name: item.name, category: "Security", monthly: item.amount, renewal: "2027-05-01", contact: "support@endpoint.example", note: "Endpoint protection." })),
   ];
   const monthSpend = breakdown.reduce((sum, slice) => sum + slice.amount, 0);
   return { monthSpend, breakdown, software, vendors };
 }
 
-const larkspurEconomics = (people: Person[]) =>
+const graniteEconomics = (people: Person[]) =>
   economics(people, {
-    pims: "Aviary",
+    fieldSystem: "Procore",
+    books: "Sage 300",
     retainer: 4800,
     cloud: [
-      { name: "Clinic website", amount: 900 },
-      { name: "Azure files", amount: 1200 },
+      { name: "Company website", amount: 400 },
+      { name: "Plan room storage", amount: 1100 },
     ],
     hardware: [
-      { name: "Hickory refresh accrual", amount: 2400 },
-      { name: "Spares", amount: 1200 },
+      { name: "Field tablet accrual", amount: 1800 },
+      { name: "Plotter", amount: 600 },
+      { name: "Spares", amount: 800 },
     ],
     telecom: [
-      { name: "Asheville circuit", amount: 2100 },
-      { name: "Hickory circuit", amount: 1800 },
-      { name: "Greenville circuit", amount: 1500 },
+      { name: "Main office circuit", amount: 1600 },
+      { name: "Yard circuit", amount: 900 },
+      { name: "River Street trailer", amount: 700 },
+      { name: "State Street trailer", amount: 650 },
+      { name: "Parkcenter trailer", amount: 550 },
+      { name: "Summit Voice", amount: 740 },
     ],
-    security: [
-      { name: "ThreatDown", amount: 2100 },
-      { name: "Mail filtering", amount: 1200 },
-    ],
+    security: [{ name: "Endpoint protection", amount: 1600 }],
     extraSoftware: [
-      { name: "Cedar Diagnostics", vendor: "Cedar Diagnostics", monthly: 1280, seats: "Workspace", renewal: "2026-11-12", note: "Lab results into Aviary. This is the renewal that needs a decision." },
-      { name: "Bramble phones", vendor: "Bramble", monthly: 740, seats: "3 clinics", renewal: "2026-12-01", note: "Handsets and the auto-attendant at each clinic." },
-      { name: "Clearwell backup", vendor: "Clearwell", monthly: 644, seats: "Workspace", renewal: "2027-06-01", note: "Nightly backup of Aviary and the file share." },
+      { name: "Plan room", vendor: "Fieldshare", monthly: 860, seats: "Workspace", renewal: "2026-12-01", note: "Current sets for the field." },
+      { name: "Tally", vendor: "Tally", monthly: 420, seats: "Field", renewal: "2027-02-01", note: "Timekeeping." },
     ],
     renewals: {
-      "Greenville circuit": { date: "2026-12-01", note: "Bundled with the Bramble handsets at Greenville." },
+      "State Street trailer": { date: "2026-12-01", note: "LTE kit." },
     },
   });
 
-const southEconomics = (people: Person[]) =>
+const redlineEconomics = (people: Person[]) =>
   economics(people, {
-    pims: "Meadow",
+    fieldSystem: "Procore",
+    books: "QuickBooks",
     retainer: 1800,
-    cloud: [{ name: "Clinic website", amount: 280 }],
-    hardware: [{ name: "Spares", amount: 420 }],
-    telecom: [{ name: "Spartanburg circuit", amount: 860 }],
-    security: [{ name: "ThreatDown", amount: 360 }],
+    cloud: [{ name: "Company website", amount: 280 }],
+    hardware: [{ name: "Spares", amount: 640 }],
+    telecom: [
+      { name: "Office circuit", amount: 700 },
+      { name: "Yard circuit", amount: 480 },
+      { name: "Addison trailer", amount: 360 },
+    ],
+    security: [{ name: "Endpoint protection", amount: 360 }],
     extraSoftware: [
-      { name: "Clearwell backup", vendor: "Clearwell", monthly: 180, seats: "Workspace", renewal: "2027-06-01", note: "Nightly backup of Meadow." },
-      { name: "Bramble phones", vendor: "Bramble", monthly: 260, seats: "1 clinic", renewal: "2027-01-15", note: "Front desk and the treatment room." },
+      { name: "Plan room", vendor: "Fieldshare", monthly: 220, seats: "Workspace", renewal: "2027-03-01", note: "Current sets." },
+      { name: "Tally", vendor: "Tally", monthly: 140, seats: "Field", renewal: "2027-02-01", note: "Timekeeping." },
     ],
     renewals: {},
   });
@@ -734,7 +549,7 @@ function seriesFor(monthSpend: number, visitors: number, opened: number, score: 
   const openFactor = [0.65, 0.53, 0.76, 0.71, 0.85, 0.62, 0.91, 0.79, 0.88, 0.97, 0.82, 1];
   const months = labels.map((label, index) => {
     const spend = Math.round(monthSpend * spendFactor[index]);
-    const budget = label === "Aug" ? Math.round(monthSpend * (30000 / 28400)) : Math.round(monthSpend * (27000 / 28400));
+    const budget = Math.round(monthSpend * (label === "Aug" ? 1.02 : 0.96));
     const monthVisitors = Math.round(visitors * visitFactor[index]);
     const monthOpened = Math.max(1, Math.round(opened * openFactor[index]));
     return {
@@ -779,80 +594,266 @@ function sumPoints(points: SeriesPoint[], key: "spend" | "budget" | "visitors" |
   return points.reduce((sum, point) => sum + point[key], 0);
 }
 
-const larkspurServices: ServiceStatus[] = [
+const graniteServices: ServiceStatus[] = [
   { id: "website", name: "Public website", status: "Operational", uptime30: 99.98, uptime90: 99.95, responseMs: 180, incidents: [] },
   { id: "m365", name: "Microsoft 365", status: "Operational", uptime30: 99.99, uptime90: 99.98, responseMs: 90, incidents: [] },
+  { id: "phones", name: "Phones", status: "Operational", uptime30: 99.95, uptime90: 99.9, responseMs: 40, incidents: [] },
   {
-    id: "aviary",
-    name: "Aviary",
+    id: "procore",
+    name: "Procore",
     status: "Degraded",
     uptime30: 99.9,
     uptime90: 99.7,
-    responseMs: 480,
-    incidents: [{ at: "2026-10-09T13:10:00.000Z", minutes: 46, summary: "Charts were slow after the Cedar credential expired. Staff kept charting. The interface is still the open urgent ticket." }],
+    responseMs: 420,
+    incidents: [{ at: "2026-10-09T13:10:00.000Z", minutes: 46, summary: "Procore was slow after the Sage credential expired." }],
   },
-  { id: "phones", name: "Phones", status: "Operational", uptime30: 99.95, uptime90: 99.9, responseMs: 40, incidents: [] },
+  { id: "sage", name: "Sage 300", status: "Operational", uptime30: 99.97, uptime90: 99.95, responseMs: 210, incidents: [{ at: "2026-10-11T16:00:00.000Z", minutes: 22, summary: "Job cost export failed once." }] },
+  { id: "plans", name: "Plan room", status: "Operational", uptime30: 99.96, uptime90: 99.94, responseMs: 160, incidents: [] },
+  { id: "bluebeam", name: "Bluebeam", status: "Operational", uptime30: 99.99, uptime90: 99.98, responseMs: 140, incidents: [] },
+  { id: "tally", name: "Timekeeping", status: "Operational", uptime30: 99.94, uptime90: 99.9, responseMs: 110, incidents: [] },
   {
     id: "internet",
-    name: "Asheville internet",
+    name: "River Street trailer",
     status: "Operational",
-    uptime30: 99.99,
-    uptime90: 99.9,
-    responseMs: 22,
-    incidents: [{ at: "2026-09-02T15:00:00.000Z", minutes: 18, summary: "Afternoon drop. Bramble failed over to the backup circuit." }],
+    uptime30: 99.9,
+    uptime90: 99.8,
+    responseMs: 28,
+    incidents: [{ at: "2026-09-02T15:00:00.000Z", minutes: 18, summary: "LTE drop. The kit failed over." }],
   },
 ];
 
-const southServices: ServiceStatus[] = [
+const redlineServices: ServiceStatus[] = [
   { id: "website", name: "Public website", status: "Operational", uptime30: 99.95, uptime90: 99.9, responseMs: 210, incidents: [] },
   { id: "google", name: "Google Workspace", status: "Operational", uptime30: 99.99, uptime90: 99.99, responseMs: 88, incidents: [] },
-  {
-    id: "meadow",
-    name: "Meadow",
-    status: "Operational",
-    uptime30: 99.95,
-    uptime90: 99.9,
-    responseMs: 260,
-    incidents: [{ at: "2026-09-18T16:20:00.000Z", minutes: 22, summary: "The dental viewer stalled. It was the PC, not Meadow." }],
-  },
   { id: "phones", name: "Phones", status: "Operational", uptime30: 99.9, uptime90: 99.8, responseMs: 36, incidents: [] },
+  { id: "procore", name: "Procore", status: "Operational", uptime30: 99.95, uptime90: 99.9, responseMs: 240, incidents: [] },
+  { id: "quickbooks", name: "QuickBooks", status: "Operational", uptime30: 99.97, uptime90: 99.95, responseMs: 180, incidents: [] },
+  { id: "plans", name: "Plan room", status: "Operational", uptime30: 99.94, uptime90: 99.9, responseMs: 170, incidents: [] },
+  { id: "bluebeam", name: "Bluebeam", status: "Operational", uptime30: 99.98, uptime90: 99.96, responseMs: 150, incidents: [] },
+  { id: "tally", name: "Timekeeping", status: "Operational", uptime30: 99.92, uptime90: 99.88, responseMs: 120, incidents: [{ at: "2026-09-18T16:20:00.000Z", minutes: 22, summary: "Punches posted late." }] },
 ];
 
 function pagesFor(host: string, sessions: number): { path: string; views: number }[] {
-  const paths = ["/", "/locations", "/team", "/request-appointment", "/new-clients"];
-  const weights = [0.34, 0.18, 0.12, 0.22, 0.08];
+  const paths = ["/", "/projects", "/careers", "/bid", "/safety"];
+  const weights = [0.34, 0.22, 0.12, 0.2, 0.12];
   return paths.map((path, index) => ({ path: `${host}${path === "/" ? "" : path}`, views: Math.round(sessions * weights[index]) }));
 }
 
-const larkspurLocations: ClinicLocation[] = [
-  { id: "asheville", name: "Asheville", address: "18 Lark Street, Asheville, NC", hours: "Mon–Fri 7:30–6, Sat 8–12", circuits: [{ name: "Primary", detail: "Bramble fiber" }, { name: "Backup", detail: "Fixed wireless" }], note: "Headquarters, finance, and the main surgery day." },
-  { id: "hickory", name: "Hickory", address: "900 Union Square, Hickory, NC", hours: "Mon–Fri 8–5:30", circuits: [{ name: "Primary", detail: "Bramble fiber" }], note: "The workstation refresh is aimed at this clinic." },
-  { id: "greenville", name: "Greenville", address: "15 Augusta Road, Greenville, SC", hours: "Mon–Fri 8–6", circuits: [{ name: "Primary", detail: "Bramble fiber" }], note: "Pharmacy label printer and the overdue restore test." },
+const graniteLocations: ClinicLocation[] = [
+  { id: "office", name: "Main office", address: "400 Front Street, Boise, ID", hours: "Mon–Fri 7–5", circuits: [{ name: "Primary", detail: "Fiber" }, { name: "Backup", detail: "LTE" }], note: "Boise headquarters." },
+  { id: "yard", name: "Yard", address: "90 Industrial Way, Meridian, ID", hours: "Mon–Fri 6–4", circuits: [{ name: "Primary", detail: "Fiber" }], note: "Meridian yard." },
+  { id: "river", name: "River Street trailer", address: "River Street, Boise, ID", hours: "Mon–Sat 6–4", circuits: [{ name: "Primary", detail: "LTE" }, { name: "Backup", detail: "Starlink" }], note: "Active job." },
+  { id: "state", name: "State Street trailer", address: "State Street, Boise, ID", hours: "Mon–Fri 6–4", circuits: [{ name: "Primary", detail: "LTE" }], note: "Active job." },
+  { id: "park", name: "Parkcenter trailer", address: "Parkcenter Blvd, Boise, ID", hours: "Mon–Fri 6–4", circuits: [{ name: "Primary", detail: "Starlink" }], note: "Active job." },
 ];
 
-const southLocations: ClinicLocation[] = [
-  { id: "spartanburg", name: "Spartanburg", address: "120 Ridge Court, Spartanburg, SC", hours: "Mon–Fri 8–5:30, Sat 8–12", circuits: [{ name: "Primary", detail: "Bramble fiber" }], note: "The only clinic on this workspace." },
+const redlineLocations: ClinicLocation[] = [
+  { id: "office", name: "Office", address: "18 Addison Avenue, Twin Falls, ID", hours: "Mon–Fri 7–5", circuits: [{ name: "Primary", detail: "Fiber" }], note: "Office." },
+  { id: "yard", name: "Yard", address: "400 Locust Street, Twin Falls, ID", hours: "Mon–Fri 6–4", circuits: [{ name: "Primary", detail: "Fiber" }], note: "Yard." },
+  { id: "addison", name: "Addison trailer", address: "Addison job, Twin Falls, ID", hours: "Mon–Sat 6–3", circuits: [{ name: "Primary", detail: "LTE" }], note: "Active pour." },
 ];
 
-function documentsFor(pims: string): WorkspaceDocument[] {
+function documentsFor(books: string): WorkspaceDocument[] {
   return [
-    { id: "acceptable-use", title: "Acceptable use", updated: "2026-05-02", owner: "Talon Support", summary: "Work accounts stay on work systems.", body: ["Clinic email is for clinic work. Personal mail stays on a personal account.", "Shared logins are not allowed on a PC that opens the practice system.", `Passwords for ${pims}, Microsoft 365, and the vendor portals are not written on a card at the desk.`] },
-    { id: "network-sketch", title: "Network sketch", updated: "2026-08-14", owner: "Talon Support", summary: "Each clinic has one firewall, one primary circuit, and the backup noted where it exists.", body: ["Asheville has a backup circuit. Hickory and Greenville do not.", "The practice system is reached over the vendor's hosted service, not a server in a closet.", "Guest wifi is a separate name and does not reach the label printers."] },
-    { id: "q3-note", title: "Q3 review notes", updated: "2026-10-06", owner: "Talon Support", summary: "Decisions from the October conversation.", body: ["MFA exceptions are down to a short list.", "The Hickory refresh stays on the calendar.", "Cedar remains the contract that needs a yes or a no before November 12."] },
+    { id: "acceptable-use", title: "Acceptable use", updated: "2026-05-02", owner: "Talon Support", summary: "Work accounts stay on work systems.", body: ["Job email is for job work."] },
+    { id: "network-sketch", title: "Network sketch", updated: "2026-08-14", owner: "Talon Support", summary: "Office, yard, and trailer kits.", body: ["Trailers use LTE or Starlink."] },
+    { id: "q3-note", title: "Q3 review notes", updated: "2026-10-06", owner: "Talon Support", summary: "October decisions.", body: [`${books} sync is the open item.`] },
   ];
 }
 
-function projectsFor(workspaceId: string): Project[] {
-  if (workspaceId === "south-ridge") {
-    return [
-      { id: "dental", name: "Dental PC replacement", status: "In progress", progress: 40, owner: "Talon Support", summary: "The imaging viewer fails because the PC is old, not because Meadow is down.", spent: 420, budget: 1100, milestones: [{ name: "Confirm the viewer license", done: true, due: "Oct 8" }, { name: "Stage the replacement PC", done: false, due: "Oct 28" }, { name: "Move the viewer", done: false, due: "Nov 4" }] },
-      { id: "mfa", name: "Close the MFA gap", status: "In progress", progress: 70, owner: "Talon Support", summary: "One active person is still missing MFA.", spent: 0, budget: 0, milestones: [{ name: "List the exceptions", done: true, due: "Sep 30" }, { name: "Enroll the last person", done: false, due: "Oct 24" }] },
-    ];
-  }
+function graniteProjects(): Project[] {
   return [
-    { id: "hickory", name: "Hickory workstation refresh", status: "In progress", progress: 60, owner: "Talon Support", summary: "Exam-room laptops from 2021 are the ones staff actually complain about.", spent: 2400, budget: 8600, milestones: [{ name: "Count the machines due", done: true, due: "Sep 12" }, { name: "Stage the first four", done: true, due: "Oct 10" }, { name: "Swap them on a surgery-light day", done: false, due: "Nov 6" }] },
-    { id: "mfa", name: "Clear MFA exceptions", status: "In progress", progress: 80, owner: "Talon Support", summary: "Six active people can still sign in with a password alone.", spent: 0, budget: 0, milestones: [{ name: "Send the list to Mara", done: true, due: "Oct 1" }, { name: "Enroll the technicians", done: false, due: "Oct 28" }, { name: "Remove the exception report", done: false, due: "Nov 8" }] },
-    { id: "forms", name: "Appointment form cleanup", status: "In progress", progress: 45, owner: "Talon Support", summary: "Requests from the website should land in the shared inbox, not a side folder.", spent: 300, budget: 1200, milestones: [{ name: "Trace the current rule", done: true, due: "Oct 15" }, { name: "Fix the Asheville mailbox", done: false, due: "Oct 23" }, { name: "Repeat it at the other clinics", done: false, due: "Nov 13" }] },
+    {
+      id: "connectivity",
+      name: "Job-site connectivity standard",
+      status: "In progress",
+      progress: 55,
+      owner: "Talon",
+      summary: "Every trailer gets a known LTE or Starlink kit.",
+      spent: 6400,
+      budget: 18000,
+      target: "2026-12-18",
+      next: "Install the State Street kit.",
+      milestones: [
+        { name: "Pick the kit", done: true, due: "Sep 12" },
+        { name: "Pilot at River Street", done: true, due: "Oct 3" },
+        { name: "State Street install", done: false, due: "Nov 7" },
+        { name: "Parkcenter install", done: false, due: "Dec 18" },
+      ],
+      updates: [
+        { at: "Oct 3", text: "River Street pilot stayed up through a pour week." },
+        { at: "Oct 16", text: "State Street kit is on the dock." },
+      ],
+    },
+    {
+      id: "procore-sage",
+      name: "Procore + Sage 300 integration",
+      status: "In progress",
+      progress: 40,
+      owner: "Talon",
+      summary: "Job costs sync nightly.",
+      spent: 8200,
+      budget: 24000,
+      target: "2027-01-30",
+      next: "Replace the expired sync credential.",
+      milestones: [
+        { name: "Map cost codes", done: true, due: "Sep 20" },
+        { name: "Nightly export", done: true, due: "Oct 8" },
+        { name: "Credential rotation", done: false, due: "Oct 28" },
+        { name: "Close the manual check", done: false, due: "Jan 30" },
+      ],
+      updates: [
+        { at: "Oct 11", text: "Export failed after the credential expired." },
+        { at: "Oct 20", text: "Sage sent a replacement key. Rotation is next." },
+      ],
+    },
+    {
+      id: "tenant",
+      name: "Microsoft 365 tenant cleanup & license right-sizing",
+      status: "In progress",
+      progress: 70,
+      owner: "Talon",
+      summary: "Unused licenses come off.",
+      spent: 2100,
+      budget: 6000,
+      target: "2026-11-20",
+      next: "Remove seats still on people who have left.",
+      milestones: [
+        { name: "License inventory", done: true, due: "Sep 30" },
+        { name: "Shared mailbox list", done: true, due: "Oct 14" },
+        { name: "Remove unused seats", done: false, due: "Nov 20" },
+      ],
+      updates: [{ at: "Oct 14", text: "Shared bid inbox is the one that still matters." }],
+    },
+    {
+      id: "backup",
+      name: "Backup & disaster recovery plan",
+      status: "Planned",
+      progress: 15,
+      owner: "Talon",
+      summary: "A tested restore for files and Sage.",
+      spent: 400,
+      budget: 9000,
+      target: "2027-02-27",
+      next: "Write the restore steps.",
+      milestones: [
+        { name: "List what must come back", done: true, due: "Oct 21" },
+        { name: "Restore test", done: false, due: "Jan 16" },
+        { name: "Sign the plan", done: false, due: "Feb 27" },
+      ],
+      updates: [{ at: "Oct 21", text: "Sage and the plan room are the two systems that must return first." }],
+    },
+    {
+      id: "tablets",
+      name: "Field tablet rollout for superintendents",
+      status: "In progress",
+      progress: 35,
+      owner: "Talon",
+      summary: "Each superintendent has a current tablet.",
+      spent: 3200,
+      budget: 12000,
+      target: "2026-12-04",
+      next: "Swap Luis Ortega's tablet.",
+      milestones: [
+        { name: "Count the supers", done: true, due: "Sep 18" },
+        { name: "Order the first six", done: true, due: "Oct 9" },
+        { name: "Hand them out", done: false, due: "Dec 4" },
+      ],
+      updates: [{ at: "Oct 18", text: "Six tablets are imaged and sitting at the main office." }],
+    },
+    {
+      id: "estimating",
+      name: "AI estimating assistant pilot",
+      status: "Planned",
+      progress: 10,
+      owner: "Talon",
+      summary: "Estimators try a draft takeoff on one bid.",
+      spent: 0,
+      budget: 8000,
+      target: "2027-03-31",
+      next: "Pick the bid to pilot.",
+      milestones: [
+        { name: "Pick a bid", done: false, due: "Nov 14" },
+        { name: "Run one takeoff", done: false, due: "Jan 23" },
+        { name: "Keep or stop", done: false, due: "Mar 31" },
+      ],
+      updates: [{ at: "Oct 6", text: "Waiting on the next bid that is not already priced." }],
+    },
+    {
+      id: "roadmap",
+      name: "IT roadmap & 2027 budget",
+      status: "Done",
+      progress: 100,
+      owner: "Talon",
+      summary: "2027 budget is with the president.",
+      spent: 4800,
+      budget: 4800,
+      target: "2026-10-15",
+      next: "None.",
+      milestones: [
+        { name: "Draft the year", done: true, due: "Sep 26" },
+        { name: "Review with Cole", done: true, due: "Oct 10" },
+        { name: "File the budget", done: true, due: "Oct 15" },
+      ],
+      updates: [{ at: "Oct 15", text: "Cole has the 2027 number." }],
+    },
+    {
+      id: "vendors",
+      name: "Vendor/contract consolidation",
+      status: "In progress",
+      progress: 60,
+      owner: "Talon",
+      summary: "Overlapping phone and backup contracts come down to one each.",
+      spent: 1500,
+      budget: 4000,
+      target: "2026-12-01",
+      next: "Compare the two phone invoices.",
+      milestones: [
+        { name: "List the contracts", done: true, due: "Sep 5" },
+        { name: "Mark the overlaps", done: true, due: "Oct 2" },
+        { name: "End the extra phone line", done: false, due: "Dec 1" },
+      ],
+      updates: [{ at: "Oct 2", text: "Two phone bills cover the same yard handsets." }],
+    },
+  ];
+}
+
+function redlineProjects(): Project[] {
+  return [
+    {
+      id: "connectivity",
+      name: "Trailer connectivity",
+      status: "In progress",
+      progress: 30,
+      owner: "Talon",
+      summary: "The Addison trailer stays online during a pour.",
+      spent: 900,
+      budget: 4000,
+      target: "2026-11-21",
+      next: "Swap the LTE kit.",
+      milestones: [
+        { name: "Confirm the outage", done: true, due: "Oct 18" },
+        { name: "Swap the kit", done: false, due: "Nov 21" },
+      ],
+      updates: [{ at: "Oct 18", text: "The current kit drops before noon." }],
+    },
+    {
+      id: "books",
+      name: "Procore and QuickBooks",
+      status: "Planned",
+      progress: 5,
+      owner: "Talon",
+      summary: "Job costs leave Procore without a spreadsheet.",
+      spent: 0,
+      budget: 6000,
+      target: "2027-02-12",
+      next: "Export one job by hand and compare.",
+      milestones: [
+        { name: "Sample export", done: false, due: "Nov 20" },
+        { name: "Turn on the sync", done: false, due: "Feb 12" },
+      ],
+      updates: [{ at: "Oct 9", text: "Not started." }],
+    },
   ];
 }
 
@@ -863,26 +864,12 @@ function reportsFor(workspace: Workspace, exec: Executive, hours: { included: nu
     blocks: [
       {
         heading: "This month",
-        paragraphs: [
-          `${workspace.name} spent ${money(exec.monthSpend)} against a ${money(exec.monthBudget)} budget. The retainer line is a sample, not a rate from the public site.`,
-          `Talon used ${hours.used} of ${hours.included} included hours. The rest of the month is the Cedar interface, MFA exceptions, and the open hardware at the clinics.`,
-        ],
+        paragraphs: [`${workspace.name} spent ${money(exec.monthSpend)} against a ${money(exec.monthBudget)} budget.`],
         figures: [
           { label: "October spend", value: money(exec.monthSpend) },
           { label: "October budget", value: money(exec.monthBudget) },
           { label: "Hours used", value: `${hours.used} of ${hours.included}` },
         ],
-      },
-      {
-        heading: "What moved",
-        paragraphs: [
-          "Hickory reminder mail was pointed back at the current list and closed. Leah's mailbox reset was routine.",
-          "Cedar results stopped filing into the practice system on October 19. That ticket is still open and is the urgent item.",
-        ],
-      },
-      {
-        heading: "Watch next",
-        paragraphs: ["Cedar's renewal is November 12. Dana Cho's access comes off on her last day. Greenville still needs a backup restore test."],
       },
     ],
   };
@@ -892,22 +879,10 @@ function reportsFor(workspace: Workspace, exec: Executive, hours: { included: nu
     blocks: [
       {
         heading: "The quarter",
-        paragraphs: [
-          `${workspace.name} is a ${workspace.plan} workspace with ${exec.headcount} people in ${workspace.region}.`,
-          `Year to date spend is ${money(exec.ytdSpend)} against ${money(exec.ytdBudget)}. August is the month the hardware accrual shows up.`,
-        ],
+        paragraphs: [`${workspace.name} is a ${workspace.plan} workspace with ${exec.headcount} people.`],
         figures: [
           { label: "Year to date", value: money(exec.ytdSpend) },
           { label: "YTD budget", value: money(exec.ytdBudget) },
-          { label: "Security score", value: String(exec.securityScore) },
-        ],
-      },
-      {
-        heading: "Decisions",
-        paragraphs: [
-          "Keep the Hickory refresh on the calendar. It is the hardware number in the budget.",
-          "Decide Cedar before November 12. There is not a second lab interface in use.",
-          "Finish MFA for the remaining active people. That is the security gap a client will ask about.",
         ],
       },
     ],
@@ -938,41 +913,39 @@ type Bundle = {
   score: number;
 };
 
-function buildLarkspur(): Bundle {
-  const people = buildLarkspurPeople();
-  const econ = larkspurEconomics(people);
-  const visitors = 4200;
-  const opened = 34;
-  const score = 82;
+function buildGranite(): Bundle {
+  const people = buildGranitePeople();
+  const econ = graniteEconomics(people);
+  const visitors = 2400;
+  const opened = 28;
+  const score = 84;
   const series = seriesFor(econ.monthSpend, visitors, opened, score);
-  const month = series.months[11];
   return {
     workspace: {
-      id: "larkspur",
-      name: "Larkspur Veterinary Group",
+      id: GRANITE,
+      name: "Granite Peak Builders",
       plan: "Pro",
-      industry: "Veterinary clinics",
-      region: "Asheville, Hickory, and Greenville",
-      website: "larkspur.example",
-      domain: "larkspur.example",
+      industry: "Commercial general contractor",
+      region: "Boise and Meridian",
+      website: "granitepeak.example",
+      domain: "granitepeak.example",
       leaderId: "p-mara",
       staffId: "p-evan",
-      blurb: "Three clinics. Microsoft 365 and Aviary. Pro retainer, sample figures.",
+      blurb: "Commercial builder. Microsoft 365 and Procore.",
       directory: "entra",
-      pims: "Aviary",
+      pims: "Procore",
     },
     people,
-    tickets: larkspurTickets(),
+    tickets: graniteTickets(),
     economics: econ,
     series,
-    services: larkspurServices,
-    locations: larkspurLocations,
-    documents: documentsFor("Aviary"),
-    projects: projectsFor("larkspur"),
+    services: graniteServices,
+    locations: graniteLocations,
+    documents: documentsFor("Sage 300"),
+    projects: graniteProjects(),
     roadmap: [
-      { quarter: "Q4 2026", items: [{ name: "Finish MFA exceptions", state: "Now" }, { name: "Decide Cedar", state: "Now" }, { name: "Swap the first Hickory laptops", state: "Now" }] },
-      { quarter: "Q1 2027", items: [{ name: "Greenville restore test", state: "Next" }, { name: "Appointment form at all three clinics", state: "Next" }] },
-      { quarter: "Q2 2027", items: [{ name: "Review Acrobat seats", state: "Later" }, { name: "Backup circuit for Hickory", state: "Later" }] },
+      { quarter: "Q4 2026", items: [{ name: "State Street kit", state: "Now" }, { name: "Sage credential", state: "Now" }, { name: "Tablet handoff", state: "Now" }] },
+      { quarter: "Q1 2027", items: [{ name: "Restore test", state: "Next" }, { name: "Procore sync close", state: "Next" }] },
     ],
     billing: {
       plan: "Pro",
@@ -985,51 +958,37 @@ function buildLarkspur(): Bundle {
         amount: 4800,
         status: "Paid" as const,
         lines: [
-          { label: "Pro retainer (sample)", amount: 4800 },
+          { label: "Pro retainer", amount: 4800 },
           { label: "Included hours", amount: 0 },
         ],
       })),
     },
     backups: [
-      { id: "asheville", label: "Asheville nightly", status: "Current", detail: "Succeeded Oct 21 at 2:10 AM." },
-      { id: "hickory", label: "Hickory nightly", status: "Current", detail: "Succeeded Oct 21 at 2:18 AM." },
-      { id: "greenville", label: "Greenville restore test", status: "Due", detail: "Last test was in August." },
+      { id: "office", label: "Main office nightly", status: "Current", detail: "Succeeded Oct 21." },
+      { id: "plans", label: "Plan room nightly", status: "Current", detail: "Succeeded Oct 21." },
+      { id: "sage", label: "Sage restore test", status: "Due", detail: "Last test was in August." },
     ],
     risks: [
-      { id: "mfa", title: "Active people without MFA", detail: "The count is on the people page and updates with the directory.", href: "/app/people?flag=mfa" },
-      { id: "cedar", title: "Cedar renewal on November 12", detail: "Lab results are already failing to file. The contract is the decision.", href: "/app/company/software" },
-      { id: "dana", title: "Offboarding still licensed", detail: "Dana Cho is leaving Friday. The seat should come off that day.", href: "/app/people/p-dana" },
-      { id: "restore", title: "Greenville restore test", detail: "Backups run. A restore has not been proven since August.", href: "/app/security" },
+      { id: "sync", title: "Sage sync credential", detail: "Job costs are not filing.", href: "/app/requests/GP-1009" },
+      { id: "elena", title: "Offboarding still licensed", detail: "Elena Frost leaves Friday.", href: "/app/people/p-dana" },
     ],
     renewals: [
-      { vendor: "Cedar Diagnostics", date: "2026-11-12", amount: 15360, note: "Annual. Decision needed." },
-      { vendor: "Bramble phones", date: "2026-12-01", amount: 8880, note: "Three clinics." },
-      { vendor: "Microsoft 365", date: "2027-01-15", amount: Math.round(month.spend > 0 ? sumBy(people, "Microsoft 365").monthly * 12 : 0), note: "Annual, from the current seats." },
+      { vendor: "Sage", date: "2026-12-01", amount: booksAnnual(people, "Sage 300"), note: "Annual." },
+      { vendor: "Fieldshare", date: "2026-12-01", amount: 10320, note: "Plan room." },
+      { vendor: "Microsoft", date: "2027-01-15", amount: Math.round(sumBy(people, "Microsoft 365").monthly * 12), note: "Annual." },
     ],
     savings: [
-      { label: "Unused Acrobat seats", amount: 172, detail: "Two finance seats are assigned to people who do not open Acrobat." },
-      { label: "Hickory fax line", amount: 95, detail: "The line is still billed. The clinic sends labs through Cedar." },
+      { label: "Unused Bluebeam seats", amount: 80, detail: "Two estimating seats were not opened this quarter." },
+      { label: "Extra yard phone line", amount: 45, detail: "A second line is still billed." },
     ],
     security: {
       score,
-      alerts: [
-        { id: "a1", title: "Shared login on the Greenville lab PC", at: "2026-10-18", detail: "Tracked as LS-1028. Named accounts are created. The shared login is still on." },
-        { id: "a2", title: "Cedar interface credential expired", at: "2026-10-19", detail: "Results are not filing. Staff are checking the portal by hand." },
-      ],
-      policies: [
-        { title: "Acceptable use", href: "/app/company/documents" },
-        { title: "Incident response", href: "/app/knowledge/incident-response" },
-        { title: "MFA setup", href: "/app/knowledge/mfa-setup" },
-      ],
-      checks: [
-        { id: "backup", label: "Nightly backups", state: "Met", detail: "Asheville and Hickory succeeded this morning.", href: "/app/security" },
-        { id: "restore", label: "Restore test", state: "Gap", detail: "Greenville has not had one since August.", href: "/app/security" },
-        { id: "patch", label: "Patching", state: "Met", detail: "Clinic PCs took the October updates.", href: "/app/security" },
-        { id: "endpoint", label: "ThreatDown EDR", state: "Met", detail: "Protected, threats, and isolated are counted on this page.", href: "/app/security" },
-      ],
+      alerts: [],
+      policies: [{ title: "Acceptable use", href: "/app" }],
+      checks: [{ id: "backup", label: "Nightly backups", state: "Met", detail: "Plan room succeeded.", href: "/app" }],
     },
     notices: [
-      { id: "n-owen", title: "Owen is locked out of Aviary", body: "He is on the surgery board tomorrow.", href: "/app/tickets/LS-1048", at: "Oct 20" },
+      { id: "n-owen", title: "Kyle is locked out of Procore", body: "He is on the yard schedule tomorrow.", href: "/app/requests/GP-1048", at: "Oct 20" },
     ],
     visitors,
     opened,
@@ -1037,83 +996,54 @@ function buildLarkspur(): Bundle {
   };
 }
 
-function buildSouth(): Bundle {
-  const people = buildSouthPeople();
-  const econ = southEconomics(people);
-  const visitors = 980;
+function booksAnnual(people: Person[], name: string): number {
+  return Math.round(sumBy(people, name).monthly * 12);
+}
+
+function buildRedline(): Bundle {
+  const people = buildRedlinePeople();
+  const econ = redlineEconomics(people);
+  const visitors = 640;
   const opened = 9;
   const score = 86;
   const series = seriesFor(econ.monthSpend, visitors, opened, score);
   return {
     workspace: {
-      id: "south-ridge",
-      name: "South Ridge Animal Hospital",
+      id: REDLINE,
+      name: "Redline Concrete & Paving",
       plan: "Essentials",
-      industry: "Veterinary clinic",
-      region: "Spartanburg, South Carolina",
-      website: "southridge.example",
-      domain: "southridge.example",
+      industry: "Concrete and paving",
+      region: "Twin Falls",
+      website: "redlinepaving.example",
+      domain: "redlinepaving.example",
       leaderId: "p-camille",
       staffId: "p-jordan",
-      blurb: "One clinic. Meadow and Google Workspace. Essentials retainer, sample figures.",
+      blurb: "Concrete and paving. Google Workspace.",
       directory: "google",
-      pims: "Meadow",
+      pims: "Procore",
     },
     people,
-    tickets: southTickets(),
+    tickets: redlineTickets(),
     economics: econ,
     series,
-    services: southServices,
-    locations: southLocations,
-    documents: documentsFor("Meadow"),
-    projects: projectsFor("south-ridge"),
-    roadmap: [
-      { quarter: "Q4 2026", items: [{ name: "Replace the dental PC", state: "Now" }, { name: "Finish MFA for Camille's new phone", state: "Now" }] },
-      { quarter: "Q1 2027", items: [{ name: "Review Meadow seats", state: "Next" }] },
-    ],
+    services: redlineServices,
+    locations: redlineLocations,
+    documents: documentsFor("QuickBooks"),
+    projects: redlineProjects(),
+    roadmap: [{ quarter: "Q4 2026", items: [{ name: "Addison kit", state: "Now" }] }],
     billing: {
       plan: "Essentials",
       monthly: 1800,
       hoursIncluded: 4,
-      hoursUsed: 3,
-      invoices: [0, 1, 2].map((index) => ({
-        id: `INV-22${2 - index}`,
-        date: ["2026-10-01", "2026-09-01", "2026-08-01"][index],
-        amount: 1800,
-        status: "Paid" as const,
-        lines: [{ label: "Essentials retainer (sample)", amount: 1800 }],
-      })),
+      hoursUsed: 2,
+      invoices: [{ id: "INV-220", date: "2026-10-01", amount: 1800, status: "Paid", lines: [{ label: "Essentials retainer", amount: 1800 }] }],
     },
-    backups: [
-      { id: "nightly", label: "Nightly backup", status: "Current", detail: "Succeeded Oct 21 at 1:40 AM." },
-      { id: "restore", label: "Restore test", status: "Current", detail: "Tested in September." },
-    ],
-    risks: [
-      { id: "dental", title: "Dental PC is the weak machine", detail: "The viewer fails on that PC. Meadow itself is up.", href: "/app/projects" },
-      { id: "mfa", title: "One active person without MFA", detail: "The people page lists who.", href: "/app/people?flag=mfa" },
-    ],
-    renewals: [
-      { vendor: "Bramble phones", date: "2027-01-15", amount: 3120, note: "One clinic." },
-      { vendor: "Google Workspace", date: "2027-01-15", amount: sumBy(people, "Google Workspace").monthly * 12, note: "Annual, from the current seats." },
-    ],
-    savings: [{ label: "Spare Acrobat seat", amount: 45, detail: "Finance has a seat that was not opened this quarter." }],
-    security: {
-      score,
-      alerts: [{ id: "a1", title: "MFA waiting on a new phone", at: "2026-10-20", detail: "Camille's replacement phone is not enrolled yet." }],
-      policies: [
-        { title: "Acceptable use", href: "/app/company/documents" },
-        { title: "Incident response", href: "/app/knowledge/incident-response" },
-      ],
-      checks: [
-        { id: "backup", label: "Nightly backups", state: "Met", detail: "Last night succeeded.", href: "/app/security" },
-        { id: "restore", label: "Restore test", state: "Met", detail: "Tested in September.", href: "/app/security" },
-        { id: "patch", label: "Patching", state: "Met", detail: "October updates are on the PCs.", href: "/app/security" },
-        { id: "endpoint", label: "ThreatDown EDR", state: "Met", detail: "Protected, threats, and isolated are counted on this page.", href: "/app/security" },
-      ],
-    },
-    notices: [
-      { id: "n-dental", title: "Dental viewer is down again", body: "Two dentals are on today's book.", href: "/app/tickets/SR-188", at: "Oct 21" },
-    ],
+    backups: [{ id: "office", label: "Office nightly", status: "Current", detail: "Succeeded Oct 21." }],
+    risks: [{ id: "net", title: "Addison trailer internet", detail: "The kit drops before noon.", href: "/app/requests/RC-188" }],
+    renewals: [{ vendor: "Fieldshare", date: "2027-03-01", amount: 2640, note: "Plan room." }],
+    savings: [],
+    security: { score, alerts: [], policies: [], checks: [] },
+    notices: [{ id: "n-addison", title: "Addison trailer internet is down", body: "A pour is on today's book.", href: "/app/requests/RC-188", at: "Oct 21" }],
     visitors,
     opened,
     score,
@@ -1121,8 +1051,8 @@ function buildSouth(): Bundle {
 }
 
 const bundles: Record<string, Bundle> = {
-  larkspur: buildLarkspur(),
-  "south-ridge": buildSouth(),
+  [GRANITE]: buildGranite(),
+  [REDLINE]: buildRedline(),
 };
 
 function bundle(id: string): Bundle {
@@ -1164,7 +1094,7 @@ export const mockRepository = {
     const october = item.series.months[11];
     const year = ytd(item.series.months);
     const sessions = sumPoints(points, "sessions");
-    const conversions = Math.round(sessions * (id === "larkspur" ? 0.036 : 0.041));
+    const conversions = Math.round(sessions * (id === GRANITE ? 0.028 : 0.034));
     return {
       range,
       rangeLabel: label,
@@ -1227,48 +1157,20 @@ export const mockRepository = {
     return bundle(id).notices;
   },
   outages(id: string): OutageEvent[] {
-    if (id === "south-ridge") {
-      return [
-        {
-          id: "o-ridge-net",
-          at: "2026-08-11",
-          kind: "internet",
-          title: "Spartanburg internet",
-          detail: "The circuit dropped for 14 minutes. Phones failed over.",
-          status: "Resolved",
-        },
-      ];
+    if (id === REDLINE) {
+      return [{ id: "o-addison", at: "2026-08-11", kind: "internet", title: "Addison trailer", detail: "The circuit dropped for 14 minutes.", status: "Resolved" }];
     }
     return [
-      {
-        id: "o-asheville",
-        at: "2026-09-02",
-        kind: "internet",
-        title: "Asheville internet",
-        detail: "Afternoon drop, 18 minutes. Bramble failed over to the backup circuit.",
-        status: "Resolved",
-      },
-      {
-        id: "o-aviary",
-        at: "2026-10-09",
-        kind: "site",
-        title: "Aviary slow",
-        detail: "Charting was slow for 46 minutes. The public site stayed up.",
-        status: "Resolved",
-      },
+      { id: "o-river", at: "2026-09-02", kind: "internet", title: "River Street trailer", detail: "LTE drop, 18 minutes.", status: "Resolved" },
+      { id: "o-procore", at: "2026-10-09", kind: "site", title: "Procore slow", detail: "Procore was slow for 46 minutes.", status: "Resolved" },
     ];
   },
   devices(id: string): AssignedDevice[] {
     const item = bundle(id);
     const assigned = item.people.flatMap((person) =>
-      person.devices.map((device) => ({
-        ...device,
-        location: person.location,
-        assigneeId: person.id,
-        assignee: person.name,
-      })),
+      person.devices.map((device) => ({ ...device, location: person.location, assigneeId: person.id, assignee: person.name })),
     );
-    const network = networkDevices(id).map((device) => ({ ...device, assignee: "Clinic" }));
+    const network = networkDevices(id).map((device) => ({ ...device, assignee: "Office" }));
     return [...assigned, ...network];
   },
   search(id: string, query: string): SearchHit[] {
@@ -1282,24 +1184,23 @@ export const mockRepository = {
     const tickets = item.tickets
       .filter((entry) => `${entry.id} ${entry.subject} ${entry.category}`.toLowerCase().includes(q))
       .slice(0, 4)
-      .map((entry) => ({ kind: "Ticket" as const, id: entry.id, label: `${entry.id} ${entry.subject}`, detail: entry.status, href: `/app/tickets/${entry.id}` }));
-    const foundArticles = articles
-      .filter((article) => `${article.title} ${article.summary}`.toLowerCase().includes(q))
+      .map((entry) => ({ kind: "Ticket" as const, id: entry.id, label: `${entry.id} ${entry.subject}`, detail: entry.status, href: `/app/requests/${entry.id}` }));
+    const projects = item.projects
+      .filter((project) => project.name.toLowerCase().includes(q))
       .slice(0, 3)
-      .map((article) => ({ kind: "Article" as const, id: article.slug, label: article.title, detail: article.category, href: `/app/knowledge/${article.slug}` }));
-    return [...people, ...tickets, ...foundArticles].slice(0, 8);
+      .map((project) => ({ kind: "Article" as const, id: project.id, label: project.name, detail: project.status, href: `/app/projects/${project.id}` }));
+    return [...people, ...tickets, ...projects].slice(0, 8);
   },
 };
 
 export function networkDevices(workspaceId: string): AssignedDevice[] {
-  const join = workspaceId === "south-ridge" ? "Google" as const : "Entra" as const;
-  const base = { join, primaryUser: "unassigned", threatdown: "Protected" as const, assignee: "Clinic" };
-  if (workspaceId === "south-ridge") {
-    return [{ id: "fw-spartanburg", name: "Firewall", type: "Network", purchased: "2023-04-01", refreshDue: "2028-04-01", price: 1800, location: "Spartanburg", ...base }];
+  const join = workspaceId === REDLINE ? "Google" as const : "Entra" as const;
+  const base = { join, primaryUser: "unassigned", threatdown: "Protected" as const, assignee: "Office" };
+  if (workspaceId === REDLINE) {
+    return [{ id: "fw-office", name: "Firewall", type: "Network", purchased: "2023-04-01", refreshDue: "2028-04-01", price: 1800, location: "Office", ...base }];
   }
   return [
-    { id: "fw-asheville", name: "Firewall", type: "Network", purchased: "2023-02-01", refreshDue: "2028-02-01", price: 2200, location: "Asheville", ...base },
-    { id: "fw-hickory", name: "Firewall", type: "Network", purchased: "2022-11-01", refreshDue: "2027-11-01", price: 1800, location: "Hickory", ...base },
-    { id: "fw-greenville", name: "Firewall", type: "Network", purchased: "2024-01-15", refreshDue: "2029-01-15", price: 1800, location: "Greenville", ...base },
+    { id: "fw-office", name: "Firewall", type: "Network", purchased: "2023-02-01", refreshDue: "2028-02-01", price: 2200, location: "Main office", ...base },
+    { id: "fw-yard", name: "Firewall", type: "Network", purchased: "2022-11-01", refreshDue: "2027-11-01", price: 1800, location: "Yard", ...base },
   ];
 }

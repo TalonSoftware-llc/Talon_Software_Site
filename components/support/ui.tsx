@@ -26,9 +26,9 @@ export function Badge({ children, tone = "mute" }: { children: ReactNode; tone?:
 }
 
 export function statusTone(status: string): keyof typeof tones {
-  if (status === "Open" || status === "Waiting" || status === "Onboarding" || status === "Gap" || status === "Due" || status === "Degraded" || status === "Threats" || status === "Behind" || status === "Pending") return "warn";
+  if (status === "Open" || status === "Waiting" || status === "Onboarding" || status === "Gap" || status === "Due" || status === "Degraded" || status === "Threats" || status === "Behind" || status === "Pending" || status === "Planned") return "warn";
   if (status === "Urgent" || status === "Down" || status === "Offboarding" || status === "Frozen" || status === "Isolated") return "bad";
-  if (status === "Active" || status === "Resolved" || status === "In progress" || status === "Operational" || status === "Met" || status === "Current" || status === "Paid" || status === "Protected" || status === "Delivered") return "ok";
+  if (status === "Active" || status === "Resolved" || status === "In progress" || status === "Operational" || status === "Met" || status === "Current" || status === "Paid" || status === "Protected" || status === "Delivered" || status === "Done") return "ok";
   return "mute";
 }
 

@@ -6,14 +6,18 @@ import { getSupportPrincipal } from "@/lib/support/session";
 const titles: [string, string][] = [
   ["/app/people/add", "Onboard user | Talon Support"],
   ["/app/requests/new", "New request | Talon Support"],
+  ["/app/projects", "Projects | Talon Support"],
   ["/app/people", "People | Talon Support"],
   ["/app/requests", "Requests | Talon Support"],
+  ["/app/support", "Support | Talon Support"],
   ["/app/spending", "Spending | Talon Support"],
-  ["/app/systems", "Website & systems | Talon Support"],
   ["/app/settings", "Settings | Talon Support"],
   ["/app/password", "Reset password | Talon Support"],
   ["/app/devices", "My devices | Talon Support"],
   ["/app/assistant", "Ask | Talon Support"],
+  ["/website", "Website | Talon Support"],
+  ["/network", "Network | Talon Support"],
+  ["/systems", "Systems | Talon Support"],
   ["/app", "Home | Talon Support"],
 ];
 

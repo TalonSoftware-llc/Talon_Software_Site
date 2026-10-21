@@ -28,12 +28,16 @@ export function demoIso(offsetMs: number): string {
 }
 
 export function formatDay(iso: string): string {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const when = dateOnly
+    ? new Date(Date.UTC(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 12))
+    : new Date(iso);
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone: "America/New_York",
-  }).format(new Date(iso));
+    timeZone: dateOnly ? "UTC" : "America/New_York",
+  }).format(when);
 }
 
 export function formatWhen(iso: string): string {

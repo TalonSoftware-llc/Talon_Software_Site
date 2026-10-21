@@ -23,62 +23,76 @@ export type OnboardTemplate = {
 };
 
 export function groupCatalog(kind: DirectoryKind): string[] {
-  if (kind === "google") return ["spartanburg-team", "asheville-team", "hickory-team", "greenville-team", "clinical", "front-desk", "finance", "operations"];
-  return ["SG-Asheville", "SG-Hickory", "SG-Greenville", "SG-Clinical", "SG-FrontDesk", "SG-Finance", "SG-Operations"];
+  if (kind === "google") return ["office-team", "yard-team", "field", "estimating", "finance", "operations"];
+  return ["SG-Office", "SG-Yard", "SG-Field", "SG-Estimating", "SG-Finance", "SG-Operations"];
+}
+
+export function accountingName(kind: DirectoryKind): string {
+  return kind === "google" ? "QuickBooks" : "Sage 300";
 }
 
 export function onboardTemplates(kind: DirectoryKind, pims: string, m365 = 26, pimsPrice = 80): OnboardTemplate[] {
-  const place = kind === "google" ? "spartanburg-team" : "SG-Asheville";
-  const clinical = kind === "google" ? "clinical" : "SG-Clinical";
-  const desk = kind === "google" ? "front-desk" : "SG-FrontDesk";
+  const place = kind === "google" ? "office-team" : "SG-Office";
+  const field = kind === "google" ? "field" : "SG-Field";
+  const estimating = kind === "google" ? "estimating" : "SG-Estimating";
   const finance = kind === "google" ? "finance" : "SG-Finance";
   const ops = kind === "google" ? "operations" : "SG-Operations";
   const base: License[] = [{ name: kind === "google" ? "Google Workspace" : "Microsoft 365", monthly: m365 }];
+  const books = accountingName(kind);
   return [
     {
-      id: "vet",
-      label: "Veterinarian",
-      department: "Clinical",
-      title: "Associate veterinarian",
-      groups: [place, clinical],
+      id: "pm",
+      label: "Project manager",
+      department: "Field",
+      title: "Project manager",
+      groups: [place, field],
       licenses: [...base, { name: pims, monthly: pimsPrice }],
       devices: [
         { name: "Laptop", type: "Laptop", price: 1480 },
-        { name: "Exam tablet", type: "Tablet", price: 640 },
+        { name: "Field tablet", type: "Tablet", price: 640 },
       ],
     },
     {
-      id: "tech",
-      label: "Veterinary technician",
-      department: "Clinical",
-      title: "Veterinary technician",
-      groups: [place, clinical],
+      id: "super",
+      label: "Superintendent",
+      department: "Field",
+      title: "Superintendent",
+      groups: [place, field],
       licenses: [...base, { name: pims, monthly: pimsPrice }],
+      devices: [{ name: "Field tablet", type: "Tablet", price: 640 }],
+    },
+    {
+      id: "foreman",
+      label: "Field foreman",
+      department: "Field",
+      title: "Field foreman",
+      groups: [field],
+      licenses: [...base, { name: pims, monthly: pimsPrice }],
+      devices: [{ name: "Work phone", type: "Phone", price: 720 }],
+    },
+    {
+      id: "estimator",
+      label: "Estimator",
+      department: "Office",
+      title: "Estimator",
+      groups: [place, estimating],
+      licenses: [...base, { name: "Bluebeam", monthly: kind === "google" ? 35 : 40 }],
       devices: [{ name: "Laptop", type: "Laptop", price: 1480 }],
     },
     {
-      id: "desk",
-      label: "Client care",
-      department: "Client care",
-      title: "Client care",
-      groups: [place, desk],
-      licenses: base,
-      devices: [{ name: "Front desk PC", type: "Desktop", price: 980 }],
-    },
-    {
       id: "finance",
-      label: "Finance",
+      label: "Accounting",
       department: "Finance",
-      title: "Finance assistant",
+      title: "Accounting",
       groups: [place, finance],
-      licenses: [...base, { name: "Acrobat", monthly: 86 }],
+      licenses: [...base, { name: books, monthly: kind === "google" ? 90 : 150 }],
       devices: [{ name: "Laptop", type: "Laptop", price: 1480 }],
     },
     {
       id: "ops",
       label: "Operations",
       department: "Operations",
-      title: "Operations assistant",
+      title: "Coordinator",
       groups: [place, ops],
       licenses: base,
       devices: [{ name: "Laptop", type: "Laptop", price: 1480 }],
@@ -88,15 +102,15 @@ export function onboardTemplates(kind: DirectoryKind, pims: string, m365 = 26, p
 
 export function offboardSteps(kind: DirectoryKind): { id: string; label: string; detail: string }[] {
   return [
-    { id: "disable", label: "Disable the account", detail: "Sign-in stops at the end of this flow." },
-    { id: "sessions", label: "Revoke sessions", detail: "Open browser and app sessions are closed." },
-    { id: "licenses", label: "Remove licenses", detail: "Paid seats come off the person record." },
+    { id: "disable", label: "Block sign-in", detail: "Sign-in stops." },
+    { id: "sessions", label: "Sign out sessions", detail: "Open sessions close." },
+    { id: "licenses", label: "Remove licenses", detail: "Paid seats come off." },
     {
       id: "transfer",
-      label: kind === "entra" ? "Transfer the mailbox" : "Transfer Drive and Gmail",
-      detail: kind === "entra" ? "Mail forwards to the manager for 30 days." : "Files and mail transfer to the manager.",
+      label: kind === "entra" ? "Transfer mailbox" : "Transfer Drive and Gmail",
+      detail: kind === "entra" ? "Mail goes to the manager." : "Files and mail go to the manager.",
     },
-    { id: "devices", label: "Recover devices", detail: "Assigned hardware is marked for pickup at the clinic." },
+    { id: "devices", label: "Collect devices", detail: "Laptop or tablet returns to the office." },
   ];
 }
 
@@ -104,7 +118,8 @@ export function licenseCatalog(kind: DirectoryKind, pims: string): License[] {
   return [
     { name: kind === "google" ? "Google Workspace" : "Microsoft 365", monthly: kind === "google" ? 22 : 26 },
     { name: pims, monthly: kind === "google" ? 70 : 80 },
-    { name: "Acrobat", monthly: kind === "google" ? 45 : 86 },
+    { name: "Bluebeam", monthly: kind === "google" ? 35 : 40 },
+    { name: accountingName(kind), monthly: kind === "google" ? 90 : 150 },
   ];
 }
 

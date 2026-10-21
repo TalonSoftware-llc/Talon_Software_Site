@@ -90,7 +90,7 @@ export function areaCatalog(mainHostname = defaultMainHostname()): Record<AreaId
       id: "support",
       host: "talon.support",
       prefix: "/support",
-      paths: ["/", "/app", "/app/people", "/app/requests", "/app/spending", "/app/systems", "/app/settings"],
+      paths: ["/", "/app", "/app/people", "/app/requests", "/app/projects", "/app/spending", "/app/support", "/app/settings", "/website", "/network", "/systems"],
     },
   };
 }

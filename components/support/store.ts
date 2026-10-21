@@ -31,37 +31,41 @@ export type DemoPrefs = {
   tickets: boolean;
   uptime: boolean;
   renewals: boolean;
-  outageRecipients: "Leadership" | "Clinic leads" | "Everyone";
+  outageRecipients: "Leadership" | "Project leads" | "Everyone";
   internetAlerts: AlertChannels;
   siteAlerts: AlertChannels;
 };
 
+const workspaceIds = ["granite", "redline"] as const;
+
 const seedApprovals = (): Record<string, Approval[]> => ({
-  larkspur: [
+  granite: [
     {
       id: "ap-laptop",
       at: "2026-10-20T15:00:00.000Z",
-      requestedBy: "Priya Shah",
+      requestedBy: "Ren Alvarez",
       status: "Pending Talon",
       kind: "Request",
-      summary: "New hire laptop for Theo Marsh",
-      target: "Theo Marsh",
+      summary: "Field tablet for Theo Lang",
+      target: "Theo Lang",
       request: {
         kind: "Hardware",
-        title: "New hire laptop for Theo Marsh",
-        detail: "Greenville start. Standard clinical laptop.",
+        title: "Field tablet for Theo Lang",
+        detail: "Superintendent tablet.",
       },
     },
   ],
-  "south-ridge": [],
+  redline: [],
 });
 
 function mergeApprovals(saved: Record<string, Approval[]>): Record<string, Approval[]> {
   const seeds = seedApprovals();
-  return {
-    larkspur: [...seeds.larkspur.filter((seed) => !saved.larkspur.some((item) => item.id === seed.id)), ...saved.larkspur],
-    "south-ridge": [...seeds["south-ridge"].filter((seed) => !saved["south-ridge"].some((item) => item.id === seed.id)), ...saved["south-ridge"]],
-  };
+  const next: Record<string, Approval[]> = {};
+  for (const id of workspaceIds) {
+    const existing = saved[id] ?? [];
+    next[id] = [...seeds[id].filter((seed) => !existing.some((item) => item.id === seed.id)), ...existing];
+  }
+  return next;
 }
 
 const defaultPrefs = (): DemoPrefs => ({
@@ -114,25 +118,25 @@ const defaultPage: PageContext = {
 
 function seedTickets(): Record<string, Ticket[]> {
   return {
-    larkspur: repo.seedTickets("larkspur"),
-    "south-ridge": repo.seedTickets("south-ridge"),
+    granite: repo.seedTickets("granite"),
+    redline: repo.seedTickets("redline"),
   };
 }
 
 function seedPeople(): Record<string, Person[]> {
   return {
-    larkspur: structuredClone(repo.people("larkspur")),
-    "south-ridge": structuredClone(repo.people("south-ridge")),
+    granite: structuredClone(repo.people("granite")),
+    redline: structuredClone(repo.people("redline")),
   };
 }
 
 function blankLists<T>(): Record<string, T[]> {
-  return { larkspur: [], "south-ridge": [] };
+  return { granite: [], redline: [] };
 }
 
 let state: DemoState = {
   hydrated: false,
-  workspaceId: "larkspur",
+  workspaceId: "granite",
   role: "leadership",
   assistantOpen: false,
   tickets: seedTickets(),
@@ -167,7 +171,7 @@ function emit() {
 function persist() {
   if (!state.hydrated || typeof window === "undefined") return;
   const payload = {
-    v: 3,
+    v: 4,
     workspaceId: state.workspaceId,
     role: state.role,
     assistantOpen: state.assistantOpen,
@@ -236,7 +240,7 @@ function readSaved(): Partial<DemoState> | null {
       approvalRequired?: boolean;
       alerts?: Record<string, CompromiseNotice[]>;
     };
-    if (parsed.v !== 3) return null;
+    if (parsed.v !== 4) return null;
     const tickets: Record<string, Ticket[]> = seedTickets();
     for (const id of Object.keys(tickets)) {
       const saved = parsed.tickets?.[id];
@@ -253,11 +257,12 @@ function readSaved(): Partial<DemoState> | null {
       if (Array.isArray(saved) && saved.every(isPerson)) people[id] = saved;
     }
     const lists = <T,>(value: Record<string, T[]> | undefined): Record<string, T[]> => ({
-      larkspur: Array.isArray(value?.larkspur) ? value.larkspur : [],
-      "south-ridge": Array.isArray(value?.["south-ridge"]) ? value["south-ridge"] : [],
+      granite: Array.isArray(value?.granite) ? value.granite : [],
+      redline: Array.isArray(value?.redline) ? value.redline : [],
     });
+    const recipients = parsed.prefs?.outageRecipients;
     return {
-      workspaceId: parsed.workspaceId === "south-ridge" ? "south-ridge" : "larkspur",
+      workspaceId: parsed.workspaceId === "redline" ? "redline" : "granite",
       role: parsed.role === "staff" ? "staff" : "leadership",
       assistantOpen: Boolean(parsed.assistantOpen),
       tickets,
@@ -268,7 +273,7 @@ function readSaved(): Partial<DemoState> | null {
         tickets: parsed.prefs?.tickets !== false,
         uptime: parsed.prefs?.uptime !== false,
         renewals: parsed.prefs?.renewals !== false,
-        outageRecipients: parsed.prefs?.outageRecipients ?? "Leadership",
+        outageRecipients: recipients === "Project leads" || recipients === "Everyone" ? recipients : "Leadership",
         internetAlerts: { ...defaultPrefs().internetAlerts, ...parsed.prefs?.internetAlerts },
         siteAlerts: { ...defaultPrefs().siteAlerts, ...parsed.prefs?.siteAlerts },
       },
@@ -347,7 +352,7 @@ export function resetDemo() {
   localStorage.removeItem(storageKey);
   commit({
     ...state,
-    workspaceId: "larkspur",
+    workspaceId: "granite",
     role: "leadership",
     tickets: seedTickets(),
     people: seedPeople(),
@@ -387,7 +392,7 @@ function facts(): AssistantFacts {
   const openTickets = tickets.filter((ticket) => ticket.status !== "Resolved").length;
   const mfaMissing = people.filter((person) => person.status === "Active" && !person.mfa).length;
   const degraded = executive.services
-    .filter((service) => (service.id === "aviary" && state.serviceUp ? false : service.status !== "Operational"))
+    .filter((service) => (service.id === "procore" && state.serviceUp ? false : service.status !== "Operational"))
     .map((service) => service.name);
   const person = state.page.section === "person" ? people.find((item) => item.name === state.page.subject) : undefined;
   const ticket = state.page.section === "ticket" ? tickets.find((item) => item.id === state.page.subject) : undefined;
@@ -499,7 +504,7 @@ export function clearDraft() {
 }
 
 function nextTicketId(workspaceId: string, tickets: Ticket[]): string {
-  const prefix = workspaceId === "larkspur" ? "LS" : "SR";
+  const prefix = workspaceId === "granite" ? "GP" : "RC";
   const numbers = tickets.map((ticket) => Number(ticket.id.split("-")[1])).filter((value) => Number.isFinite(value));
   return `${prefix}-${Math.max(1000, ...numbers) + 1}`;
 }
@@ -588,12 +593,9 @@ export function tickPulse(): number {
 }
 
 export function recoverService() {
-  if (state.workspaceId !== "larkspur" || state.serviceUp) {
-    if (!state.serviceUp && state.workspaceId === "larkspur") commit({ ...state, serviceUp: true }, false);
-    return;
-  }
+  if (state.workspaceId !== "granite" || state.serviceUp) return;
   commit({ ...state, serviceUp: true }, false);
-  if (state.prefs.uptime) pushToast("Site is back");
+  if (state.prefs.uptime) pushToast("Procore is up");
 }
 
 export function pushLiveTicket() {
@@ -671,7 +673,7 @@ export function onboardPerson(
     location: input.location,
     managerId: input.managerId || workspace.leaderId,
     email,
-    phone: "(828) 555-0199",
+    phone: "(208) 555-0199",
     startDate: input.startDate || "2026-11-02",
     status: "Onboarding",
     mfa: false,

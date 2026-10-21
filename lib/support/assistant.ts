@@ -94,24 +94,46 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
     return { text: "Choose who is told.", cites: [link("Settings", "/app/settings")] };
   }
 
-  if (/uptime|down|aviary|meadow|website|visitor|page load|ssl|status|safe/.test(q)) {
+  if (/procore|sage|integration|job cost/.test(q)) {
+    return leadership
+      ? { text: "In progress.", cites: [link("Procore + Sage 300", "/app/projects/procore-sage")] }
+      : { text: "Ask a leader.", cites: [link("Home", "/app")] };
+  }
+
+  if (/project|roadmap|starlink|tablet rollout|estimat|consolidation/.test(q)) {
+    return leadership
+      ? { text: "Projects.", cites: [link("Projects", "/app/projects")] }
+      : { text: "Ask a leader.", cites: [link("Home", "/app")] };
+  }
+
+  if (/backup|disaster|restore/.test(q)) {
+    return leadership
+      ? { text: "Planned.", cites: [link("Backup & disaster recovery plan", "/app/projects/backup")] }
+      : { text: "Ask a leader.", cites: [link("Home", "/app")] };
+  }
+
+  if (/internet|latency|network|circuit/.test(q)) {
+    return { text: "Network.", cites: [link("Network", "/network")] };
+  }
+
+  if (/email|bluebeam|timekeeping|plan room/.test(q) || (/\bphones?\b/.test(q) && !/new phone/.test(q))) {
+    return { text: "Systems.", cites: [link("Systems", "/systems")] };
+  }
+
+  if (/uptime|down|website|visitor|page load|ssl|status|safe/.test(q)) {
     return facts.degraded.length
-      ? { text: facts.degraded.join(", "), cites: [link("Website & systems", "/app/systems")] }
-      : { text: "Up.", cites: [link("Website & systems", "/app/systems")] };
+      ? { text: facts.degraded.join(", "), cites: [link("Website", "/website")] }
+      : { text: "Up.", cites: [link("Website", "/website")] };
   }
 
   if (/threatdown|endpoint|edr|isolated|malware|security/.test(q)) {
     return { text: "Talon handles security.", cites: [link("Home", "/app")] };
   }
 
-  if (/renew|cedar|saving|contract|vendor/.test(q)) {
+  if (/renew|saving|contract|vendor/.test(q)) {
     return leadership
-      ? { text: "Cedar renews November 12.", cites: [link("Spending", "/app/spending")] }
+      ? { text: "Sage renews December 1.", cites: [link("Spending", "/app/spending")] }
       : { text: hidden, cites: [link("Home", "/app")] };
-  }
-
-  if (/backup|restore/.test(q)) {
-    return { text: "Talon handles that.", cites: [link("Home", "/app")] };
   }
 
   if (/new request|new ticket|file a ticket|open a ticket|create a ticket|draft/.test(q)) {
@@ -143,7 +165,7 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
     return { text: "New request.", cites: [link("New request", "/app/requests/new")] };
   }
 
-  if (/report|qbr|monthly|project|roadmap/.test(q)) {
+  if (/report|qbr|monthly/.test(q)) {
     return leadership
       ? { text: "Spending.", cites: [link("Spending", "/app/spending")] }
       : { text: hidden, cites: [link("Home", "/app")] };
@@ -162,7 +184,7 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
   }
 
   return {
-    text: "Ask for a person, a request, or spending.",
+    text: "Ask for a person, a request, a project, or spending.",
     cites: [link("Home", "/app"), link("New request", "/app/requests/new")],
   };
 }
