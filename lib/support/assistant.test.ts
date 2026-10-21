@@ -113,6 +113,9 @@ const procore = draftAssistantReply({
   facts,
 });
 assert.match(procore.text, /In progress/);
+assert.match(procore.text, /40%/);
+assert.match(procore.text, /\$8,200/);
+assert.match(procore.text, /Credential rotation/);
 assert.ok(procore.cites.some((cite) => cite.href === "/app/projects/procore-sage"));
 assert.equal(procore.cites.some((cite) => cite.href.includes("security")), false);
 

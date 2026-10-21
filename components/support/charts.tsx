@@ -3,35 +3,40 @@
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { money } from "@/lib/support/format";
 
-const palette = ["#1f4d45", "#1b2430", "#3e7c6f", "#c4a574", "#6d7c8a", "#8fa89a"];
+export const spendPalette = ["#1f4d45", "#1b2430", "#3e7c6f", "#c4a574", "#6d7c8a", "#8fa89a", "#245c6b", "#4d4538"];
 
 const tooltipStyle = { borderRadius: 8, borderColor: "#e1e6ec", fontSize: 13 };
 
-export function SpendDonut({
+export function SpendPie({
   data,
   selected,
   onPick,
 }: {
   data: { name: string; amount: number }[];
   selected?: string;
-  onPick: (name: string) => void;
+  onPick?: (name: string) => void;
 }) {
   return (
-    <div className="h-52">
+    <div className="h-80 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             dataKey="amount"
             nameKey="name"
-            innerRadius={52}
-            outerRadius={78}
-            paddingAngle={2}
-            cursor="pointer"
-            onClick={(_, index) => onPick(data[index]?.name ?? "")}
+            innerRadius={0}
+            outerRadius="82%"
+            stroke="#ffffff"
+            strokeWidth={2}
+            cursor={onPick ? "pointer" : "default"}
+            onClick={(_, index) => onPick?.(data[index]?.name ?? "")}
           >
-            {data.map((entry) => (
-              <Cell key={entry.name} fill={palette[data.indexOf(entry) % palette.length]} opacity={!selected || selected === entry.name ? 1 : 0.35} />
+            {data.map((entry, index) => (
+              <Cell
+                key={entry.name}
+                fill={spendPalette[index % spendPalette.length]}
+                opacity={!selected || selected === entry.name ? 1 : 0.35}
+              />
             ))}
           </Pie>
           <Tooltip formatter={(value) => money(Number(value ?? 0))} contentStyle={tooltipStyle} />
@@ -56,7 +61,7 @@ export function SpendBars({
           <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#5c6b7a" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 12, fill: "#5c6b7a" }} axisLine={false} tickLine={false} width={48} tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`} />
           <Tooltip formatter={(value, name) => [money(Number(value ?? 0)), name === "spend" ? "Spend" : "Budget"]} contentStyle={tooltipStyle} />
-          <Bar dataKey="spend" fill="#1f4d45" radius={[3, 3, 0, 0]} cursor="pointer" onClick={(_, index) => onPick(data[index]?.label ?? "")} />
+          <Bar dataKey="spend" fill={spendPalette[0]} radius={[3, 3, 0, 0]} cursor="pointer" onClick={(_, index) => onPick(data[index]?.label ?? "")} />
           <Bar dataKey="budget" fill="#c9d3dc" radius={[3, 3, 0, 0]} cursor="pointer" onClick={(_, index) => onPick(data[index]?.label ?? "")} />
         </BarChart>
       </ResponsiveContainer>
@@ -126,4 +131,4 @@ export function ScoreLine({ data }: { data: { label: string; score: number }[] }
   );
 }
 
-export const chartPalette = palette;
+export const chartPalette = spendPalette;

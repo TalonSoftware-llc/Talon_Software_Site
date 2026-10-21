@@ -2,9 +2,9 @@ import { getAssistantClient, inferCategory, inferPriority } from "@/lib/support/
 import type { AssistantFacts } from "@/lib/support/assistant";
 import { getSupportRepository } from "@/lib/support/data";
 import { liveTicket } from "@/lib/support/data/mock";
-import { sla } from "@/lib/support/format";
+import { categoryLabel, DEMO_NOW, formatDay, sla } from "@/lib/support/format";
 import { compromiseTemplate, directoryLabel, licenseCatalog, onboardTemplates } from "@/lib/support/identity";
-import { personCost } from "@/lib/support/stats";
+import { averageResponseHours, personCost } from "@/lib/support/stats";
 import type {
   Approval,
   AuditEntry,
@@ -428,7 +428,77 @@ function facts(): AssistantFacts {
           late: clock?.late ?? false,
         }
       : undefined,
+    projects: repo.projects(state.workspaceId).map((project) => {
+      const open = project.milestones.find((milestone) => !milestone.done);
+      return {
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        progress: project.progress,
+        next: project.next,
+        nextDue: open ? `${open.name}, ${open.due}` : "None",
+        spent: project.spent,
+        budget: project.budget,
+      };
+    }),
+    systems: executive.services
+      .filter((service) => ["m365", "google", "phones", "procore", "sage", "quickbooks", "plans", "bluebeam", "tally"].includes(service.id))
+      .map((service) => ({
+        name: systemLabel(service.id, service.name),
+        state: service.id === "procore" && state.serviceUp ? "Up" : service.status === "Down" ? "Down" : service.status === "Degraded" ? "Slow" : "Up",
+      })),
+    sites: repo.locations(state.workspaceId).map((location) => ({ name: location.name, state: "Up" })),
+    website: websiteFacts(state.workspaceId, executive),
+    categories: executive.breakdown.map((item) => ({ name: categoryLabel(item.name), amount: item.amount })),
+    topRequester: topRequester(tickets, people),
+    responseHours: averageResponseHours(tickets),
+    outage: firstOutage(state.workspaceId),
   };
+}
+
+const systemLabels: Record<string, string> = {
+  m365: "Email",
+  google: "Email",
+  phones: "Phone",
+  procore: "Procore",
+  sage: "Sage 300",
+  quickbooks: "QuickBooks",
+  plans: "Plan room",
+  bluebeam: "Bluebeam",
+  tally: "Timekeeping",
+};
+
+function systemLabel(id: string, fallback: string): string {
+  return systemLabels[id] ?? fallback;
+}
+
+function websiteFacts(workspaceId: string, executive: ReturnType<typeof repo.executive>) {
+  const website = executive.services.find((service) => service.id === "website");
+  return {
+    uptime: website?.uptime30 ?? 0,
+    load: website?.responseMs ?? 0,
+    visitors: executive.traffic.visitors,
+    ssl: formatDay(workspaceId === "redline" ? "2026-12-02" : "2027-03-12"),
+  };
+}
+
+function topRequester(tickets: Ticket[], people: Person[]): string | undefined {
+  const week = 7 * 86_400_000;
+  const counts = new Map<string, number>();
+  for (const ticket of tickets) {
+    const opened = new Date(ticket.opened).getTime();
+    if (DEMO_NOW.getTime() - opened > week || opened > DEMO_NOW.getTime()) continue;
+    counts.set(ticket.requesterId, (counts.get(ticket.requesterId) ?? 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  return top ? people.find((person) => person.id === top[0])?.name : undefined;
+}
+
+function firstOutage(workspaceId: string): string | undefined {
+  const outage = repo.outages(workspaceId).find((item) => item.kind === "internet");
+  if (!outage) return undefined;
+  const minutes = outage.id === "o-river" ? 18 : outage.id === "o-addison" ? 14 : 0;
+  return `${outage.title} was down ${minutes} minutes on ${formatDay(outage.at)}.`;
 }
 
 export function ask(question: string) {

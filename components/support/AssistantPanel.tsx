@@ -61,7 +61,7 @@ export default function AssistantPanel({ mode = "dock", inputId = "assistant-ask
             {message.role === "assistant" && !message.pending && message.cites.length ? (
               <div className="mt-1 flex flex-wrap gap-2">
                 {message.cites.map((cite) => (
-                  <Link key={`${cite.href}-${cite.title}`} href={href(cite.href)} className="text-xs font-semibold text-pine hover:underline">
+                  <Link key={`${cite.href}-${cite.title}`} href={href(cite.href)} className="rounded-full bg-[#e7f3ef] px-2.5 py-1 text-xs font-semibold text-pine hover:underline">
                     {cite.title}
                   </Link>
                 ))}

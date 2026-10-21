@@ -29,8 +29,11 @@ export function ProjectsList() {
                 <h2 className="text-base font-semibold">{project.name}</h2>
                 <Badge tone={statusTone(project.status)}>{project.status}</Badge>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef2f5]">
-                <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-[#d5dde6]" role="progressbar" aria-valuenow={project.progress} aria-valuemin={0} aria-valuemax={100} aria-label={project.name}>
+                  <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
+                </div>
+                <span className="w-12 text-right text-base font-semibold tabular-nums">{project.progress}%</span>
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span>{formatDay(project.target)}</span>
@@ -63,8 +66,11 @@ export function ProjectDetail({ id }: { id: string }) {
         <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
         <Badge tone={statusTone(project.status)}>{project.status}</Badge>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-[#eef2f5]">
-        <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
+      <div className="flex items-center gap-3">
+        <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-[#d5dde6]" role="progressbar" aria-valuenow={project.progress} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
+        </div>
+        <span className="text-base font-semibold tabular-nums">{project.progress}%</span>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span>{formatDay(project.target)}</span>
