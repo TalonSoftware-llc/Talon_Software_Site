@@ -1,5 +1,5 @@
-import { ReportView } from "@/components/support/views/Rest";
+import { redirect } from "next/navigation";
 
-export default function MonthlyReportPage() {
-  return <ReportView kind="monthly" />;
+export default function Page() {
+  redirect("/app/spending");
 }

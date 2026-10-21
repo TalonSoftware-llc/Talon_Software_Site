@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { TicketList } from "@/components/support/views/Tickets";
+import { redirect } from "next/navigation";
 
-export default function TicketsPage() {
-  return (
-    <Suspense fallback={<p className="text-sm">Loading tickets…</p>}>
-      <TicketList />
-    </Suspense>
-  );
+export default function Page() {
+  redirect("/app/requests");
 }

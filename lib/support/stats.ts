@@ -51,6 +51,13 @@ function monthLabel(iso: string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "America/New_York" }).format(new Date(iso));
 }
 
+export function averageResponseHours(tickets: Ticket[]): number | null {
+  const resolved = tickets.filter((ticket) => ticket.status === "Resolved");
+  if (!resolved.length) return null;
+  const hours = resolved.map((ticket) => (new Date(ticket.updated).getTime() - new Date(ticket.opened).getTime()) / 3_600_000);
+  return Math.round(hours.reduce((sum, value) => sum + value, 0) / hours.length);
+}
+
 export function slaRate(tickets: Ticket[]): number {
   const closed = tickets.filter((ticket) => ticket.status === "Resolved");
   if (!closed.length) return 100;

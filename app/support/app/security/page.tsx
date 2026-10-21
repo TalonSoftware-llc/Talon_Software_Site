@@ -1,5 +1,7 @@
-import { SecurityView } from "@/components/support/views/Rest";
+"use client";
+
+import { SecurityHome } from "@/components/support/views/Security";
 
 export default function SecurityPage() {
-  return <SecurityView />;
+  return <SecurityHome />;
 }

@@ -1,5 +1,5 @@
-import { CompanyView } from "@/components/support/views/Company";
+import { redirect } from "next/navigation";
 
-export default function CompanyPage() {
-  return <CompanyView section="" />;
+export default function Page() {
+  redirect("/app/people");
 }

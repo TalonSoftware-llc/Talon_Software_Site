@@ -1,6 +1,6 @@
-import { OffboardFlow } from "@/components/support/views/People";
+import { redirect } from "next/navigation";
 
-export default async function OffboardPersonPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <OffboardFlow id={id} />;
+  redirect(`/app/people/${id}`);
 }

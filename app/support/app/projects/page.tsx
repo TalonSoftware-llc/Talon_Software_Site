@@ -1,5 +1,5 @@
-import { ProjectsView } from "@/components/support/views/Rest";
+import { redirect } from "next/navigation";
 
-export default function ProjectsPage() {
-  return <ProjectsView />;
+export default function Page() {
+  redirect("/app");
 }

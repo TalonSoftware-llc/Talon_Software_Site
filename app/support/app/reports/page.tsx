@@ -1,5 +1,5 @@
-import { ReportsHome } from "@/components/support/views/Rest";
+import { redirect } from "next/navigation";
 
-export default function ReportsPage() {
-  return <ReportsHome />;
+export default function Page() {
+  redirect("/app/spending");
 }

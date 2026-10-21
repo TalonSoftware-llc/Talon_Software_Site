@@ -1,5 +1,5 @@
-import { AuditLog } from "@/components/support/views/People";
+import { redirect } from "next/navigation";
 
-export default function AuditPage() {
-  return <AuditLog />;
+export default function Page() {
+  redirect("/app");
 }

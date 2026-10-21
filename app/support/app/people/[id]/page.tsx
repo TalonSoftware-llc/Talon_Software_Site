@@ -1,6 +1,9 @@
+"use client";
+
+import { use } from "react";
 import { PersonProfile } from "@/components/support/views/People";
 
-export default async function PersonPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function PersonPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   return <PersonProfile id={id} />;
 }

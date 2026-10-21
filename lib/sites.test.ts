@@ -174,16 +174,10 @@ assert.deepEqual(robotsForHost("talon.consulting", main), {
 assert.deepEqual(sitemapUrls("talon.support", main), [
   "https://talon.support",
   "https://talon.support/app",
-  "https://talon.support/app/assistant",
-  "https://talon.support/app/tickets",
-  "https://talon.support/app/knowledge",
   "https://talon.support/app/people",
-  "https://talon.support/app/help",
-  "https://talon.support/app/company",
+  "https://talon.support/app/requests",
   "https://talon.support/app/security",
-  "https://talon.support/app/projects",
-  "https://talon.support/app/reports",
-  "https://talon.support/app/billing",
+  "https://talon.support/app/spending",
   "https://talon.support/app/settings",
 ]);
 assert.ok(sitemapUrls("talonsoftware.dev", main).includes("https://talonsoftware.dev/plans"));

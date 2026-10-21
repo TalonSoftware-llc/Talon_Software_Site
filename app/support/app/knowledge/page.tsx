@@ -1,5 +1,5 @@
-import { KnowledgeList } from "@/components/support/views/Knowledge";
+import { redirect } from "next/navigation";
 
-export default function KnowledgePage() {
-  return <KnowledgeList />;
+export default function Page() {
+  redirect("/app");
 }

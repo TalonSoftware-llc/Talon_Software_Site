@@ -1,5 +1,5 @@
-import { NewTicket } from "@/components/support/views/Tickets";
+import { redirect } from "next/navigation";
 
-export default function NewTicketPage() {
-  return <NewTicket />;
+export default function Page() {
+  redirect("/app/requests/new");
 }

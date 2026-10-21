@@ -65,7 +65,7 @@ const spend = draftAssistantReply({
   facts,
 });
 assert.match(spend.text, /\$28,400/);
-assert.ok(spend.cites.some((cite) => cite.href === "/app/billing"));
+assert.ok(spend.cites.some((cite) => cite.href === "/app/spending"));
 
 const staff = draftAssistantReply({
   question: "Where is spend versus budget?",
@@ -84,7 +84,7 @@ const onboard = draftAssistantReply({
   hints: [],
   facts,
 });
-assert.ok(onboard.cites.some((cite) => cite.href === "/app/people/onboard"));
+assert.ok(onboard.cites.some((cite) => cite.href === "/app/people/add"));
 
 const contained = draftAssistantReply({
   question: "Do you train on our data?",

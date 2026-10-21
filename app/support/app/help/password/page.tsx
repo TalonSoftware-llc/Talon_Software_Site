@@ -1,5 +1,5 @@
-import { PasswordHelp } from "@/components/support/views/Help";
+import { redirect } from "next/navigation";
 
-export default function PasswordHelpPage() {
-  return <PasswordHelp />;
+export default function Page() {
+  redirect("/app/password");
 }

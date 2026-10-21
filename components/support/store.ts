@@ -72,16 +72,16 @@ export type DemoState = {
 const greeting: ChatMessage = {
   id: "m-hello",
   role: "assistant",
-  text: "Ask anything in this workspace. I can open the right page, walk through a step, or draft a ticket. Answers stay in this company workspace, follow the view you selected, and are not used to train a model.",
-  shown: "Ask anything in this workspace. I can open the right page, walk through a step, or draft a ticket. Answers stay in this company workspace, follow the view you selected, and are not used to train a model.",
+  text: "Ask anything.",
+  shown: "Ask anything.",
   cites: [],
   pending: false,
 };
 
 const defaultPage: PageContext = {
-  section: "overview",
-  title: "Overview",
-  hints: ["Where is spend versus budget?", "What is down right now?", "Who still needs MFA?"],
+  section: "home",
+  title: "Home",
+  hints: ["Am I safe?", "What am I spending?"],
 };
 
 function seedTickets(): Record<string, Ticket[]> {
@@ -260,8 +260,7 @@ export function bootDemo() {
   if (booted || typeof window === "undefined") return;
   booted = true;
   const saved = readSaved();
-  const open = saved?.assistantOpen ?? window.innerWidth >= 1024;
-  commit({ ...state, ...saved, assistantOpen: open, hydrated: true }, false);
+  commit({ ...state, ...saved, assistantOpen: false, hydrated: true }, false);
 }
 
 function toast(title: string, body?: string): Toast {
@@ -269,7 +268,8 @@ function toast(title: string, body?: string): Toast {
 }
 
 function pushToast(title: string, body?: string) {
-  const item = toast(title, body);
+  void body;
+  const item = toast(title);
   commit({ ...state, toasts: [...state.toasts, item].slice(-3) }, false);
   window.setTimeout(() => dismissToast(item.id), 4200);
 }
@@ -461,7 +461,7 @@ export function draftFromChat(): TicketDraft | null {
     detail: latest.text,
   };
   commit({ ...state, draft }, false);
-  pushToast("Ticket draft ready", "Nothing is filed until you submit the form.");
+  pushToast("Draft ready");
   return draft;
 }
 
@@ -510,7 +510,7 @@ export function addTicket(input: { subject: string; category: Ticket["category"]
     draft: null,
     tickets: { ...state.tickets, [state.workspaceId]: [ticket, ...tickets] },
   });
-  pushToast("Ticket filed", `${id} is in the queue for this demo.`);
+  pushToast("Request filed");
   return ticket;
 }
 
@@ -525,7 +525,7 @@ export function setTicketStatus(id: string, status: TicketStatus) {
       ),
     },
   });
-  pushToast("Status updated", `${id} is now ${status.toLowerCase()}.`);
+  pushToast("Updated");
 }
 
 export function addTicketNote(id: string, body: string, internal: boolean) {
@@ -550,7 +550,7 @@ export function addTicketNote(id: string, body: string, internal: boolean) {
       ),
     },
   });
-  pushToast(internal ? "Internal note added" : "Reply added", "Saved in this browser for the demo.");
+  pushToast("Saved");
 }
 
 export function tickPulse(): number {
@@ -565,7 +565,7 @@ export function recoverService() {
     return;
   }
   commit({ ...state, serviceUp: true }, false);
-  if (state.prefs.uptime) pushToast("Aviary is responding normally", "The slow period in this demo has cleared.");
+  if (state.prefs.uptime) pushToast("Site is back");
 }
 
 export function pushLiveTicket() {
@@ -577,7 +577,7 @@ export function pushLiveTicket() {
     id: `live-${arriving.id}`,
     title: arriving.subject,
     body: "New request in the queue.",
-    href: `/app/tickets/${arriving.id}`,
+    href: `/app/requests/${arriving.id}`,
     at: "Just now",
   };
   commit({
@@ -585,12 +585,12 @@ export function pushLiveTicket() {
     tickets: { ...state.tickets, [state.workspaceId]: [{ ...arriving, fresh: true }, ...tickets] },
     liveNotices: [notice, ...state.liveNotices],
   });
-  if (state.prefs.tickets) pushToast("New ticket", `${arriving.id}: ${arriving.subject}`);
+  if (state.prefs.tickets) pushToast("New request");
 }
 
 export function refreshFigures() {
   commit({ ...state, pulse: Math.min(36, state.pulse + 1) }, false);
-  pushToast("Figures refreshed", "Sample counters moved. Nothing was fetched.");
+  pushToast("Refreshed");
 }
 
 function peopleNow(): Person[] {
@@ -678,7 +678,7 @@ export function onboardPerson(
       approvals: { ...state.approvals, [state.workspaceId]: [approval, ...(state.approvals[state.workspaceId] ?? [])] },
       audit: withAudit("Onboard", name, "Waiting for Talon. No directory was called.", "Queued"),
     });
-    pushToast("Sent to Talon", "The account is not created until the queue is approved.");
+    pushToast("Waiting");
     return { ok: true };
   }
   commit({
@@ -686,7 +686,7 @@ export function onboardPerson(
     people: { ...state.people, [state.workspaceId]: [person, ...peopleNow()] },
     audit: withAudit("Onboard", name, `${template.label}: ${template.groups.join(", ")} and ${template.licenses.map((item) => item.name).join(", ")}.`, "Applied"),
   });
-  pushToast("Onboarding applied", `${name} is in the directory preview.`);
+  pushToast("Added");
   return { ok: true };
 }
 
@@ -720,7 +720,7 @@ export function updatePerson(
       approvals: { ...state.approvals, [state.workspaceId]: [approval, ...(state.approvals[state.workspaceId] ?? [])] },
       audit: withAudit("Update", person.name, "Waiting for Talon.", "Queued"),
     });
-    pushToast("Sent to Talon", "The account is unchanged until the queue is approved.");
+    pushToast("Waiting");
     return { ok: true };
   }
   commit({
@@ -728,7 +728,7 @@ export function updatePerson(
     people: { ...state.people, [state.workspaceId]: peopleNow().map((item) => (item.id === personId ? next : item)) },
     audit: withAudit("Update", person.name, detail, "Applied"),
   });
-  pushToast("Account updated", "Saved in this browser. No directory was called.");
+  pushToast("Saved");
   return { ok: true };
 }
 
@@ -759,7 +759,7 @@ export function offboardPerson(personId: string, stepUp: boolean): { ok: boolean
       approvals: { ...state.approvals, [state.workspaceId]: [approval, ...(state.approvals[state.workspaceId] ?? [])] },
       audit: withAudit("Offboard", person.name, "Waiting for Talon.", "Queued"),
     });
-    pushToast("Sent to Talon", "The account stays active until the queue is approved.");
+    pushToast("Waiting");
     return { ok: true };
   }
   commit({
@@ -772,7 +772,7 @@ export function offboardPerson(personId: string, stepUp: boolean): { ok: boolean
     },
     audit: withAudit("Offboard", person.name, detail, "Applied"),
   });
-  pushToast("Offboarding applied", `${person.name} is disabled in this preview.`);
+  pushToast("Removed");
   return { ok: true };
 }
 
@@ -812,7 +812,7 @@ export function sendCompromiseAlert(personId: string, lock: boolean): { ok: bool
     alerts: { ...state.alerts, [workspaceId]: [notice, ...(state.alerts[workspaceId] ?? [])] },
     audit: withAudit("Compromised account", person.name, notice.lockNote, "Applied"),
     liveNotices: [
-      { id: notice.id, title: "Compromised account notice", body: `${person.name} is in the notice.`, href: "/app/people/compromised", at: "Just now" },
+      { id: notice.id, title: person.name, body: "", href: "/app/security/lock", at: "Just now" },
       ...state.liveNotices,
     ],
   });
@@ -827,9 +827,9 @@ export function sendCompromiseAlert(personId: string, lock: boolean): { ok: bool
         [workspaceId]: current.map((item) => (item.id === noticeId ? { ...item, status: "Delivered", deliveredTo: recipients } : item)),
       },
     });
-    pushToast("Notice delivered", `${person.name}: ${recipients} mailboxes in this demo. No email was sent.`);
+    pushToast("Sent");
   }, 700);
-  pushToast("Notice queued", "Delivery is simulated in this browser.");
+  pushToast("Queued");
   return { ok: true };
 }
 
@@ -890,7 +890,7 @@ export function submitRequest(input: Omit<ServiceRequest, "id" | "status" | "tic
       approvals: { ...state.approvals, [state.workspaceId]: [approval, ...(state.approvals[state.workspaceId] ?? [])] },
       audit: withAudit(input.kind, input.title, "Waiting for approval.", "Queued"),
     });
-    pushToast("Sent for approval", "Nothing is provisioned until Talon approves it in this demo.");
+    pushToast("Waiting");
     return { ok: true };
   }
   const ticket = addTicket({

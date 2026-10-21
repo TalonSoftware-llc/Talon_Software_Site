@@ -1,5 +1,5 @@
-import { OnboardFlow } from "@/components/support/views/People";
+import { redirect } from "next/navigation";
 
-export default function OnboardPage() {
-  return <OnboardFlow />;
+export default function Page() {
+  redirect("/app/people/add");
 }

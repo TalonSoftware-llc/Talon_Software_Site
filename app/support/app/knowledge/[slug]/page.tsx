@@ -1,6 +1,5 @@
-import { ArticleView } from "@/components/support/views/Knowledge";
+import { redirect } from "next/navigation";
 
-export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  return <ArticleView slug={slug} />;
+export default function Page() {
+  redirect("/app");
 }

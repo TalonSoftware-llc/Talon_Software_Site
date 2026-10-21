@@ -1,5 +1,10 @@
-import Overview from "@/components/support/views/Overview";
+"use client";
 
-export default function SupportOverviewPage() {
-  return <Overview />;
+import Home from "@/components/support/views/Home";
+import { GetHelp } from "@/components/support/views/Staff";
+import { useDemo } from "@/components/support/use-demo";
+
+export default function SupportHomePage() {
+  const demo = useDemo();
+  return demo.role === "staff" ? <GetHelp /> : <Home />;
 }

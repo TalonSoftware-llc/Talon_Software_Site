@@ -34,8 +34,7 @@ export default function AssistantPanel({ mode = "dock" }: { mode?: "dock" | "pag
     <section className={`flex h-full min-h-0 flex-col bg-white ${mode === "dock" ? "w-full" : ""}`} aria-label="Assistant">
       <header className="flex items-center justify-between gap-2 border-b border-[#e1e6ec] px-4 py-3">
         <div>
-          <p className="text-sm font-semibold text-ink">Assistant</p>
-          <p className="text-xs text-ink/50">{demo.page.title}</p>
+          <p className="text-sm font-semibold text-ink">Ask</p>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold">
           {mode === "dock" ? (
@@ -111,14 +110,11 @@ export default function AssistantPanel({ mode = "dock" }: { mode?: "dock" | "pag
             className="text-xs font-semibold text-pine hover:underline"
             onClick={() => {
               const draft = draftFromChat();
-              if (draft) router.push(href("/app/tickets/new"));
+              if (draft) router.push(href("/app/requests/new"));
             }}
           >
-            Draft a ticket
+            New request
           </button>
-          <p className="text-right text-[11px] leading-snug text-ink/45">
-            Contained to this workspace. No training on company data. Staff replies omit leadership figures. Scripted in the browser. Nothing is sent to a model.
-          </p>
         </div>
       </div>
     </section>

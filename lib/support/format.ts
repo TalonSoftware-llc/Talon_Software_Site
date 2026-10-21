@@ -8,6 +8,13 @@ const moneyFormat = new Intl.NumberFormat("en-US", {
 
 const numberFormat = new Intl.NumberFormat("en-US");
 
+export function categoryLabel(name: string): string {
+  if (name.startsWith("Talon")) return "Retainer";
+  if (name.startsWith("Cloud")) return "Cloud";
+  if (name.startsWith("Security")) return "Security";
+  return name;
+}
+
 export function money(value: number): string {
   return moneyFormat.format(Math.round(value));
 }

@@ -4,24 +4,18 @@ import { areaHref, getRequestSite } from "@/lib/request-site";
 import { getSupportPrincipal } from "@/lib/support/session";
 
 const titles: [string, string][] = [
-  ["/app/people/onboard", "Onboard | Talon Support"],
-  ["/app/people/audit", "Audit log | Talon Support"],
-  ["/app/people/compromised", "Compromised account | Talon Support"],
-  ["/app/tickets/new", "New ticket | Talon Support"],
-  ["/app/reports/monthly", "Monthly report | Talon Support"],
-  ["/app/reports/qbr", "Quarterly review | Talon Support"],
-  ["/app/help", "Password and MFA | Talon Support"],
+  ["/app/people/add", "Add person | Talon Support"],
+  ["/app/requests/new", "New request | Talon Support"],
+  ["/app/security/lock", "Lock account | Talon Support"],
   ["/app/people", "People | Talon Support"],
-  ["/app/tickets", "Tickets | Talon Support"],
-  ["/app/knowledge", "Knowledge | Talon Support"],
-  ["/app/company", "Company | Talon Support"],
+  ["/app/requests", "Requests | Talon Support"],
   ["/app/security", "Security | Talon Support"],
-  ["/app/projects", "Projects | Talon Support"],
-  ["/app/reports", "Reports | Talon Support"],
-  ["/app/billing", "Billing | Talon Support"],
+  ["/app/spending", "Spending | Talon Support"],
   ["/app/settings", "Settings | Talon Support"],
-  ["/app/assistant", "Assistant | Talon Support"],
-  ["/app", "Overview | Talon Support"],
+  ["/app/password", "Reset password | Talon Support"],
+  ["/app/devices", "My devices | Talon Support"],
+  ["/app/assistant", "Ask | Talon Support"],
+  ["/app", "Home | Talon Support"],
 ];
 
 function titleFor(path: string): string {
@@ -31,10 +25,7 @@ function titleFor(path: string): string {
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getRequestSite();
-  return {
-    title: titleFor(site.publicPath),
-    description: "Demo workspace for Talon Support. Sample data only. The assistant is scripted and does not call a model.",
-  };
+  return { title: titleFor(site.publicPath) };
 }
 
 export default async function SupportAppLayout({ children }: { children: React.ReactNode }) {
