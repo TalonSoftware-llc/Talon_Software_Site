@@ -369,7 +369,7 @@ function larkspurTickets(): Ticket[] {
       message("m1", "Priya Shah", -80 * hour, "Theo starts at Greenville this week. He has a mailbox. Aviary and MFA are still open."),
       message("m2", "Talon Support", -8 * hour, "Mailbox is done. Aviary seat is assigned. MFA is waiting on Theo, which matches the onboarding checklist."),
     ]),
-    ticket("larkspur", "LS-1036", "Dana Cho last day Friday", "Offboarding", "High", "Open", "p-evan", -40 * hour, -5 * hour, -20 * hour, 50 * hour, [
+    ticket("larkspur", "LS-1036", "Dana Cho last day Friday", "Offboarding", "High", "Open", "p-priya", -40 * hour, -5 * hour, -20 * hour, 50 * hour, [
       message("m1", "Evan Cho", -40 * hour, "Dana's last day is Friday. Please close the mailbox, Aviary, and the Hickory door badge that afternoon."),
       message("m2", "Talon Support", -5 * hour, "Scheduled for Friday at 4. The license should not stay on after that.", true),
     ]),

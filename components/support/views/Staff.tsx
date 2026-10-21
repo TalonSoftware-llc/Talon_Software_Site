@@ -46,7 +46,7 @@ export function GetHelp() {
           <button type="submit" className={primaryClass}>Ask</button>
         </div>
       </form>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((tile) => (
           <Link key={tile.label} href={href(tile.href)} className={`${cardClass} flex items-center gap-3 hover:border-pine/40`}>
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#e7f3ef] text-pine">

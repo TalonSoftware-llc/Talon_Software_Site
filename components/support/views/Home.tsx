@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { getSupportRepository } from "@/lib/support/data";
-import { categoryLabel, formatDay, money, num } from "@/lib/support/format";
+import { categoryLabel, money, num } from "@/lib/support/format";
 import { averageResponseHours } from "@/lib/support/stats";
 import { SpendBars } from "../charts";
 import { useFrame } from "../frame";
@@ -15,20 +15,30 @@ import { cardClass, primaryClass, quietClass } from "../ui";
 const repo = getSupportRepository(null);
 const barColors = ["#1f4d45", "#1b2430", "#3e7c6f", "#c4a574", "#6d7c8a", "#8fa89a"];
 
-function systemRole(id: string): string {
-  if (id === "aviary" || id === "meadow") return "Charting";
-  if (id === "website") return "Website";
-  if (id === "internet") return "Internet";
-  if (id === "phones") return "Phones";
-  return "System";
+function systemSentence(service: { id: string; name: string; status: string }): string {
+  const state = service.status === "Down" ? "down" : "running slow";
+  if (service.id === "aviary" || service.id === "meadow") return `Charting app (${service.name}) ${state}`;
+  if (service.id === "internet") return `Internet ${state}`;
+  if (service.id === "phones") return `Phones ${state}`;
+  return `${service.name} ${state}`;
 }
 
-function MiniBars({ values }: { values: number[] }) {
-  const max = Math.max(...values, 1);
+function shortDay(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(new Date(iso));
+}
+
+function MiniBars({ points, format }: { points: { label: string; value: number }[]; format: (value: number) => string }) {
+  const max = Math.max(...points.map((point) => point.value), 1);
   return (
-    <div className="flex h-12 items-end gap-1" aria-hidden="true">
-      {values.map((value, index) => (
-        <div key={index} className="min-w-0 flex-1 rounded-sm bg-pine/80" style={{ height: `${Math.max(12, (value / max) * 100)}%` }} />
+    <div className="flex items-end gap-1">
+      {points.map((point) => (
+        <div key={point.label} className="group relative flex min-w-0 flex-1 flex-col justify-end">
+          <div className="flex h-12 items-end">
+            <div className="w-full rounded-sm bg-pine/80" style={{ height: `${Math.max(8, (point.value / max) * 100)}%` }} title={`${point.label}: ${format(point.value)}`} />
+          </div>
+          <span className="pointer-events-none absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-[#1b2430] px-1.5 py-0.5 text-[10px] font-semibold text-white group-hover:block">{format(point.value)}</span>
+          <span className="mt-1 truncate text-center text-[10px] leading-none text-ink/45">{point.label}</span>
+        </div>
       ))}
     </div>
   );
@@ -42,6 +52,7 @@ export default function Home() {
   const people = demo.people[demo.workspaceId] ?? [];
   const tickets = demo.tickets[demo.workspaceId] ?? [];
   const executive = repo.executive(demo.workspaceId, "12m");
+  const weeks = repo.executive(demo.workspaceId, "30d").series;
   const services = executive.services.map((service) => {
     if (service.id === "aviary" && demo.serviceUp) return { ...service, status: "Operational" as const };
     return service;
@@ -65,13 +76,14 @@ export default function Home() {
   const picked = points.find((point) => point.label === month);
   const visits = executive.traffic.visitors + demo.pulse * 2;
   const websiteDown = website && website.status !== "Operational";
-  const attention = missing.length + devices.length + others.length > 0;
+  const attention = missing.length + devices.length > 0;
+  const onboarding = people.find((person) => person.id === "p-theo" && person.status === "Onboarding");
   usePageContext({ section: "home", title: "Home", hints: ["Am I safe?", "What am I spending?"] });
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className={cardClass}>
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${attention ? "bg-[#c4a574]" : "bg-[#1f4d45]"}`} />
@@ -91,12 +103,6 @@ export default function Home() {
                 <Link href={href("/app/security")} className={quietClass}>Review</Link>
               </li>
             ) : null}
-            {others.map((service) => (
-              <li key={service.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                <span>{service.name} · {systemRole(service.id)}</span>
-                <Link href={href("/app/security")} className={quietClass}>Review</Link>
-              </li>
-            ))}
             {!attention ? <li className="py-2.5 text-sm text-ink/60">Protected</li> : null}
           </ul>
         </section>
@@ -121,13 +127,13 @@ export default function Home() {
             ))}
           </ul>
           <div className="mt-4">
-            <MiniBars values={points.map((point) => point.spend)} />
+            <MiniBars points={points.map((point) => ({ label: point.label, value: point.spend }))} format={money} />
           </div>
         </Link>
 
         <section className={cardClass}>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Website</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Website & systems</h2>
             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${websiteDown ? "bg-[#f8e8e6] text-[#7a3030]" : "bg-[#e7f3ef] text-[#1f4d45]"}`}>
               {websiteDown ? "Down" : `${website?.uptime30 ?? 0}% · 30 days`}
             </span>
@@ -140,11 +146,17 @@ export default function Home() {
               return <span key={index} className={`h-8 flex-1 rounded-sm ${color}`} />;
             })}
           </div>
-          <p className="mt-3 text-sm tabular-nums text-ink/70">Visits {num(visits)}</p>
+          <p className="mt-3 flex items-center gap-2 text-sm tabular-nums text-ink/70">
+            <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pine/40" />
+              <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${demo.pulse % 2 ? "bg-[#3e7c6f]" : "bg-pine"}`} />
+            </span>
+            Visits {num(visits)}
+          </p>
           {others.map((service) => (
-            <div key={service.id} className="mt-3 flex items-center justify-between text-sm">
-              <span>{service.name} <span className="text-ink/50">{systemRole(service.id)}</span></span>
-              <span className="rounded-full bg-[#f8f1de] px-2 py-0.5 text-xs font-semibold text-[#6d5420]">{service.status === "Down" ? "Down" : "Slow"}</span>
+            <div key={service.id} className="mt-3 flex items-center justify-between gap-3 text-sm">
+              <span>{systemSentence(service)}</span>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${service.status === "Down" ? "bg-[#f8e8e6] text-[#7a3030]" : "bg-[#f8f1de] text-[#6d5420]"}`}>{service.status === "Down" ? "Down" : "Slow"}</span>
             </div>
           ))}
         </section>
@@ -161,8 +173,9 @@ export default function Home() {
               <p className="text-sm text-ink/60">Average response</p>
             </div>
           </div>
-          <div className="mt-4">
-            <MiniBars values={points.slice(-6).map((point) => point.opened)} />
+          <p className="mt-4 text-xs text-ink/50">Requests per week</p>
+          <div className="mt-2">
+            <MiniBars points={weeks.map((point) => ({ label: point.label, value: point.opened }))} format={(value) => String(value)} />
           </div>
         </Link>
       </div>
@@ -171,21 +184,27 @@ export default function Home() {
         <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Waiting</h2>
         <ul className="mt-3 divide-y divide-[#eef2f5]">
           {pending.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <span>{item.kind} {item.target}</span>
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+              <span>{item.summary}</span>
               <span className="flex gap-2">
                 <button type="button" className={primaryClass} onClick={() => decideApproval(item.id, true)}>Approve</button>
                 <button type="button" className={quietClass} onClick={() => decideApproval(item.id, false)}>Decline</button>
               </span>
             </li>
           ))}
+          {onboarding ? (
+            <li className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+              <span>{onboarding.name} onboarding</span>
+              <Link href={href(`/app/people/${onboarding.id}`)} className={quietClass}>Review</Link>
+            </li>
+          ) : null}
           {renewal ? (
-            <li className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <span>{renewal.vendor} · {formatDay(renewal.date)}</span>
+            <li className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+              <span>{renewal.vendor} contract renews {shortDay(renewal.date)}</span>
               <Link href={href("/app/spending")} className={quietClass}>Review</Link>
             </li>
           ) : null}
-          {!pending.length && !renewal ? <li className="py-2.5 text-sm">None</li> : null}
+          {!pending.length && !onboarding && !renewal ? <li className="py-2.5 text-sm">None</li> : null}
         </ul>
       </section>
 

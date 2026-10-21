@@ -28,7 +28,7 @@ export function SpendingView() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Spending</h1>
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
         <section className={cardClass}>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">This month</p>
           <p className="mt-3 text-3xl font-semibold tabular-nums">{money(executive.monthSpend)}</p>
@@ -42,7 +42,7 @@ export function SpendingView() {
         </section>
       </div>
       <section className={cardClass}>
-        <div className="grid items-center gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-2">
           <SpendDonut data={slices} selected={picked ?? undefined} onPick={setPicked} />
           <ul className="space-y-1">
             {slices.map((item) => (

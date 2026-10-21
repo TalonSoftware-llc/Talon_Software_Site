@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { getSupportRepository } from "@/lib/support/data";
 import { StepUp } from "../StepUp";
 import { useFrame } from "../frame";
 import { usePageContext } from "../page-context";
@@ -11,16 +10,10 @@ import { sendCompromiseAlert } from "../store";
 import { useDemo } from "../use-demo";
 import { cardClass, fieldClass, primaryClass, quietClass } from "../ui";
 
-const repo = getSupportRepository(null);
-
-function posture(workspaceId: string, people: { status: string; mfa: boolean; devices: { id: string; name: string; threatdown: string }[]; name: string }[], serviceUp: boolean) {
-  const services = repo.executive(workspaceId, "30d").services.map((service) =>
-    service.id === "aviary" && serviceUp ? { ...service, status: "Operational" as const } : service,
-  );
-  const down = services.filter((service) => service.status !== "Operational").length;
+function posture(people: { status: string; mfa: boolean; devices: { id: string; name: string; threatdown: string }[]; name: string }[]) {
   const devices = people.flatMap((person) => person.devices.filter((device) => device.threatdown !== "Protected").map((device) => ({ ...device, person: person.name })));
   const missing = people.filter((person) => person.status === "Active" && !person.mfa).length;
-  return { count: missing + devices.length + down, devices };
+  return { count: missing + devices.length, devices };
 }
 
 export function SecurityHome() {
@@ -28,11 +21,7 @@ export function SecurityHome() {
   const { href } = useFrame();
   const [open, setOpen] = useState(false);
   const people = demo.people[demo.workspaceId] ?? [];
-  const { count, devices } = posture(demo.workspaceId, people, demo.serviceUp);
-  const services = repo.executive(demo.workspaceId, "30d").services.map((service) =>
-    service.id === "aviary" && demo.serviceUp ? { ...service, status: "Operational" as const } : service,
-  );
-  const alerts = services.filter((service) => service.status !== "Operational");
+  const { count, devices } = posture(people);
   const missing = people.filter((person) => person.status === "Active" && !person.mfa).length;
   const allDevices = people.flatMap((person) => person.devices);
   const protectedCount = allDevices.filter((device) => device.threatdown === "Protected").length;
@@ -47,7 +36,7 @@ export function SecurityHome() {
         <h1 className="text-2xl font-semibold tracking-tight">Security</h1>
         <Link href={href("/app/security/lock")} className={primaryClass}>Lock account & alert company</Link>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
         <section className={cardClass}>
           <div className="flex items-center gap-3">
             <span className={`h-3 w-3 rounded-full ${count ? "bg-[#c4a574]" : "bg-[#1f4d45]"}`} />
@@ -66,12 +55,6 @@ export function SecurityHome() {
                 <button type="button" className={quietClass} onClick={() => setOpen(true)}>Update devices</button>
               </li>
             ) : null}
-            {alerts.map((service) => (
-              <li key={service.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <span>{service.name} · {service.id === "aviary" || service.id === "meadow" ? "Charting" : "System"}</span>
-                <button type="button" className={quietClass} onClick={() => setOpen(true)}>Review alert</button>
-              </li>
-            ))}
             {!count ? <li className="py-3 text-sm">Protected</li> : null}
           </ul>
         </section>
@@ -89,8 +72,7 @@ export function SecurityHome() {
       {open ? (
         <ul className={`${cardClass} space-y-2 text-sm`}>
           {devices.map((device) => <li key={device.id}>{device.person} · {device.name}</li>)}
-          {alerts.map((service) => <li key={service.id}>{service.name} · {service.status === "Down" ? "Down" : "Slow"}</li>)}
-          {devices.length === 0 && alerts.length === 0 ? <li>None</li> : null}
+          {devices.length === 0 ? <li>None</li> : null}
         </ul>
       ) : null}
     </div>

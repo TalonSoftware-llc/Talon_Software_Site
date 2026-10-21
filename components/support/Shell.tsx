@@ -128,10 +128,10 @@ function Chrome({ children }: { children: ReactNode }) {
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-2 border-b border-[#e1e6ec] bg-white px-3 py-2">
+          <header className="flex flex-wrap items-center gap-2 border-b border-[#e1e6ec] bg-white px-3 py-2">
             <button type="button" className="rounded-md border border-[#d5dde6] px-2 py-1 text-sm lg:hidden" onClick={() => setNavOpen(true)} aria-label="Open navigation">Menu</button>
             <span className="hidden rounded-full bg-[#f4ecd8] px-2 py-1 text-xs font-semibold text-[#5c4816] sm:inline">Demo data</span>
-            <div className="relative min-w-0 flex-1">
+            <div className="relative min-w-[8rem] flex-1 basis-40">
               <label className="sr-only" htmlFor="portal-search">Search</label>
               <input id="portal-search" value={query} onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }} onFocus={() => setSearchOpen(true)} placeholder="Search" className="w-full rounded-md border border-[#d5dde6] px-3 py-2 text-sm outline-none focus:border-pine" />
               {searchOpen && query.trim().length >= 2 ? (

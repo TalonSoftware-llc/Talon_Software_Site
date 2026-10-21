@@ -36,6 +36,34 @@ export type DemoPrefs = {
   siteAlerts: AlertChannels;
 };
 
+const seedApprovals = (): Record<string, Approval[]> => ({
+  larkspur: [
+    {
+      id: "ap-laptop",
+      at: "2026-10-20T15:00:00.000Z",
+      requestedBy: "Priya Shah",
+      status: "Pending Talon",
+      kind: "Request",
+      summary: "New hire laptop for Theo Marsh",
+      target: "Theo Marsh",
+      request: {
+        kind: "Hardware",
+        title: "New hire laptop for Theo Marsh",
+        detail: "Greenville start. Standard clinical laptop.",
+      },
+    },
+  ],
+  "south-ridge": [],
+});
+
+function mergeApprovals(saved: Record<string, Approval[]>): Record<string, Approval[]> {
+  const seeds = seedApprovals();
+  return {
+    larkspur: [...seeds.larkspur.filter((seed) => !saved.larkspur.some((item) => item.id === seed.id)), ...saved.larkspur],
+    "south-ridge": [...seeds["south-ridge"].filter((seed) => !saved["south-ridge"].some((item) => item.id === seed.id)), ...saved["south-ridge"]],
+  };
+}
+
 const defaultPrefs = (): DemoPrefs => ({
   tickets: true,
   uptime: true,
@@ -120,7 +148,7 @@ let state: DemoState = {
   draft: null,
   liveNotices: [],
   audit: blankLists(),
-  approvals: blankLists(),
+  approvals: seedApprovals(),
   requests: blankLists(),
   approvalRequired: false,
   alerts: blankLists(),
@@ -246,7 +274,7 @@ function readSaved(): Partial<DemoState> | null {
       },
       readNoticeIds: Array.isArray(parsed.readNoticeIds) ? parsed.readNoticeIds.filter((id) => typeof id === "string") : [],
       audit: lists(parsed.audit),
-      approvals: lists(parsed.approvals),
+      approvals: mergeApprovals(lists(parsed.approvals)),
       requests: lists(parsed.requests),
       approvalRequired: Boolean(parsed.approvalRequired),
       alerts: lists(parsed.alerts),
@@ -333,7 +361,7 @@ export function resetDemo() {
     liveNotices: [],
     page: defaultPage,
     audit: blankLists(),
-    approvals: blankLists(),
+    approvals: seedApprovals(),
     requests: blankLists(),
     approvalRequired: false,
     alerts: blankLists(),
