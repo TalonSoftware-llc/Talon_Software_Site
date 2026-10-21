@@ -1,12 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Suspense } from "react";
-import { LockAccount } from "@/components/support/views/Security";
-
-export default function LockPage() {
-  return (
-    <Suspense fallback={null}>
-      <LockAccount />
-    </Suspense>
-  );
+export default function Page() {
+  redirect("/app");
 }

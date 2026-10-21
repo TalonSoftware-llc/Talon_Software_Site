@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef } from "react";
-import { ask, clearMessages, draftFromChat, setAssistantOpen } from "./store";
+import { ask, clearMessages, draftFromChat } from "./store";
 import { useDemo } from "./use-demo";
 import { useFrame } from "./frame";
 
-export default function AssistantPanel({ mode = "dock" }: { mode?: "dock" | "page" }) {
+export default function AssistantPanel({ mode = "dock", inputId = "assistant-ask" }: { mode?: "dock" | "page"; inputId?: string }) {
   const demo = useDemo();
   const { href } = useFrame();
   const router = useRouter();
@@ -49,11 +49,6 @@ export default function AssistantPanel({ mode = "dock" }: { mode?: "dock" | "pag
           <button type="button" className="text-ink/50 hover:text-ink" onClick={() => clearMessages()}>
             Clear
           </button>
-          {mode === "dock" ? (
-            <button type="button" className="text-ink/50 hover:text-ink" onClick={() => setAssistantOpen(false)}>
-              Hide
-            </button>
-          ) : null}
         </div>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
@@ -90,11 +85,11 @@ export default function AssistantPanel({ mode = "dock" }: { mode?: "dock" | "pag
           ))}
         </div>
         <form onSubmit={submit} autoComplete="off" className="flex gap-2">
-          <label className="sr-only" htmlFor="assistant-ask">
+          <label className="sr-only" htmlFor={inputId}>
             Ask anything
           </label>
           <input
-            id="assistant-ask"
+            id={inputId}
             ref={inputRef}
             placeholder="Ask anything"
             autoComplete="off"

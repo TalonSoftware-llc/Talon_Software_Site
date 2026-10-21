@@ -176,8 +176,8 @@ assert.deepEqual(sitemapUrls("talon.support", main), [
   "https://talon.support/app",
   "https://talon.support/app/people",
   "https://talon.support/app/requests",
-  "https://talon.support/app/security",
   "https://talon.support/app/spending",
+  "https://talon.support/app/systems",
   "https://talon.support/app/settings",
 ]);
 assert.ok(sitemapUrls("talonsoftware.dev", main).includes("https://talonsoftware.dev/plans"));

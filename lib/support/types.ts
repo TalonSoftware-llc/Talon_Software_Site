@@ -68,6 +68,7 @@ export type Person = {
   groups: string[];
   privileged: boolean;
   accountEnabled: boolean;
+  frozen?: boolean;
   health: DeviceHealth;
 };
 

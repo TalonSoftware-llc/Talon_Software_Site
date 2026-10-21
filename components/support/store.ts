@@ -3,7 +3,7 @@ import type { AssistantFacts } from "@/lib/support/assistant";
 import { getSupportRepository } from "@/lib/support/data";
 import { liveTicket } from "@/lib/support/data/mock";
 import { sla } from "@/lib/support/format";
-import { compromiseTemplate, directoryLabel, onboardTemplates } from "@/lib/support/identity";
+import { compromiseTemplate, directoryLabel, licenseCatalog, onboardTemplates } from "@/lib/support/identity";
 import { personCost } from "@/lib/support/stats";
 import type {
   Approval,
@@ -109,7 +109,7 @@ const greeting: ChatMessage = {
 const defaultPage: PageContext = {
   section: "home",
   title: "Home",
-  hints: ["Am I safe?", "What am I spending?"],
+  hints: ["What is waiting?", "What am I spending?"],
 };
 
 function seedTickets(): Record<string, Ticket[]> {
@@ -643,7 +643,7 @@ export function setApprovalRequired(approvalRequired: boolean) {
 }
 
 export function onboardPerson(
-  input: { name: string; templateId: string; location: string; managerId: string; startDate: string },
+  input: { name: string; templateId: string; location: string; managerId: string; startDate: string; licenseName?: string },
   stepUp: boolean,
 ): { ok: boolean; reason?: string } {
   if (state.role !== "leadership") return { ok: false, reason: "Only the leadership view can onboard someone." };
@@ -660,6 +660,9 @@ export function onboardPerson(
   const id = `p-new-${serial++}`;
   const [first, ...rest] = name.toLowerCase().split(/\s+/);
   const email = `${first}.${rest.join("") || "hire"}@${workspace.domain}`;
+  const suite = template.licenses[0];
+  const picked = licenseCatalog(workspace.directory, workspace.pims).find((item) => item.name === input.licenseName);
+  const licenses = picked && suite && picked.name !== suite.name ? [suite, picked] : template.licenses;
   const person: Person = {
     id,
     name,
@@ -673,7 +676,7 @@ export function onboardPerson(
     status: "Onboarding",
     mfa: false,
     training: "Due",
-    licenses: template.licenses,
+    licenses,
     devices: template.devices.map((device, index) => ({
       id: `${id}-d${index}`,
       name: device.name,
@@ -804,6 +807,26 @@ export function offboardPerson(personId: string, stepUp: boolean): { ok: boolean
   return { ok: true };
 }
 
+export function freezePerson(personId: string, freeze: boolean): { ok: boolean; reason?: string } {
+  if (state.role !== "leadership") return { ok: false, reason: "Only the leadership view can freeze an account." };
+  const person = peopleNow().find((item) => item.id === personId);
+  if (!person) return { ok: false, reason: "That person is not in this workspace." };
+  if (person.privileged) return { ok: false, reason: "Privileged roles cannot be frozen here." };
+  if (person.status === "Offboarding") return { ok: false, reason: "This account is already closed." };
+  commit({
+    ...state,
+    people: {
+      ...state.people,
+      [state.workspaceId]: peopleNow().map((item) =>
+        item.id === personId ? { ...item, frozen: freeze, accountEnabled: !freeze } : item,
+      ),
+    },
+    audit: withAudit(freeze ? "Freeze" : "Unfreeze", person.name, freeze ? "Sign-in blocked. Sessions revoked." : "Sign-in restored.", "Applied"),
+  });
+  pushToast(freeze ? "Frozen" : "Unfrozen");
+  return { ok: true };
+}
+
 export function sendCompromiseAlert(personId: string, lock: boolean): { ok: boolean; reason?: string } {
   if (state.role !== "leadership") return { ok: false, reason: "Only the leadership view can send this notice." };
   const person = peopleNow().find((item) => item.id === personId);
@@ -840,7 +863,7 @@ export function sendCompromiseAlert(personId: string, lock: boolean): { ok: bool
     alerts: { ...state.alerts, [workspaceId]: [notice, ...(state.alerts[workspaceId] ?? [])] },
     audit: withAudit("Compromised account", person.name, notice.lockNote, "Applied"),
     liveNotices: [
-      { id: notice.id, title: person.name, body: "", href: "/app/security/lock", at: "Just now" },
+      { id: notice.id, title: person.name, body: "", href: `/app/people/${person.id}`, at: "Just now" },
       ...state.liveNotices,
     ],
   });

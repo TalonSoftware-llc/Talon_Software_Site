@@ -4,13 +4,12 @@ import { areaHref, getRequestSite } from "@/lib/request-site";
 import { getSupportPrincipal } from "@/lib/support/session";
 
 const titles: [string, string][] = [
-  ["/app/people/add", "Add person | Talon Support"],
+  ["/app/people/add", "Onboard user | Talon Support"],
   ["/app/requests/new", "New request | Talon Support"],
-  ["/app/security/lock", "Lock account | Talon Support"],
   ["/app/people", "People | Talon Support"],
   ["/app/requests", "Requests | Talon Support"],
-  ["/app/security", "Security | Talon Support"],
   ["/app/spending", "Spending | Talon Support"],
+  ["/app/systems", "Website & systems | Talon Support"],
   ["/app/settings", "Settings | Talon Support"],
   ["/app/password", "Reset password | Talon Support"],
   ["/app/devices", "My devices | Talon Support"],

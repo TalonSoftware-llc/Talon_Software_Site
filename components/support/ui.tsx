@@ -9,6 +9,9 @@ export const primaryClass =
 export const quietClass =
   "inline-flex items-center justify-center rounded-md border border-[#d5dde6] bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-pine/40";
 
+export const dangerClass =
+  "inline-flex items-center justify-center rounded-md bg-[#7a3030] px-3 py-2 text-sm font-semibold text-white hover:bg-[#642828]";
+
 export const cardClass = "rounded-xl border border-[#e1e6ec] bg-white p-5 shadow-sm";
 
 const tones = {
@@ -24,7 +27,7 @@ export function Badge({ children, tone = "mute" }: { children: ReactNode; tone?:
 
 export function statusTone(status: string): keyof typeof tones {
   if (status === "Open" || status === "Waiting" || status === "Onboarding" || status === "Gap" || status === "Due" || status === "Degraded" || status === "Threats" || status === "Behind" || status === "Pending") return "warn";
-  if (status === "Urgent" || status === "Down" || status === "Offboarding" || status === "Isolated") return "bad";
+  if (status === "Urgent" || status === "Down" || status === "Offboarding" || status === "Frozen" || status === "Isolated") return "bad";
   if (status === "Active" || status === "Resolved" || status === "In progress" || status === "Operational" || status === "Met" || status === "Current" || status === "Paid" || status === "Protected" || status === "Delivered") return "ok";
   return "mute";
 }

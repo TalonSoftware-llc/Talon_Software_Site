@@ -95,4 +95,14 @@ const contained = draftAssistantReply({
 });
 assert.match(contained.text, /not used to train/);
 
+const freeze = draftAssistantReply({
+  question: "Lock the account",
+  pageTitle: "People",
+  pageSection: "people",
+  hints: [],
+  facts,
+});
+assert.match(freeze.text, /Freeze account/);
+assert.equal(freeze.cites.some((cite) => cite.href.includes("security")), false);
+
 console.log("assistant checks passed");

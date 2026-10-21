@@ -1029,9 +1029,7 @@ function buildLarkspur(): Bundle {
       ],
     },
     notices: [
-      { id: "n-cedar", title: "Cedar renews November 12", body: "Lab results are already missing from charts.", href: "/app/company/software", at: "Oct 21" },
       { id: "n-owen", title: "Owen is locked out of Aviary", body: "He is on the surgery board tomorrow.", href: "/app/tickets/LS-1048", at: "Oct 20" },
-      { id: "n-restore", title: "Greenville restore test is overdue", body: "Backups ran. A restore has not.", href: "/app/security", at: "Oct 18" },
     ],
     visitors,
     opened,
@@ -1115,7 +1113,6 @@ function buildSouth(): Bundle {
     },
     notices: [
       { id: "n-dental", title: "Dental viewer is down again", body: "Two dentals are on today's book.", href: "/app/tickets/SR-188", at: "Oct 21" },
-      { id: "n-mfa", title: "MFA is waiting on a new phone", body: "Camille needs to be in the office for the reset.", href: "/app/tickets/SR-170", at: "Oct 20" },
     ],
     visitors,
     opened,

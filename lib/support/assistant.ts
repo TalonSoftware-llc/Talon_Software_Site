@@ -67,11 +67,11 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
     return { text: "Answers are not used to train.", cites: [link("Settings", "/app/settings")] };
   }
 
-  if (/compromis|lock the account|lock account|alert the company|company-wide/.test(q)) {
-    const href = facts.person ? `/app/security/lock?person=${facts.person.id}` : "/app/security/lock";
+  if (/freeze|unfreeze|compromis|lock the account|lock account|alert the company|company-wide/.test(q)) {
+    const href = facts.person ? `/app/people/${facts.person.id}` : "/app/people";
     return leadership
-      ? { text: "Lock account and alert the company.", cites: [link("Lock account", href)] }
-      : { text: "Ask a leader to lock the account.", cites: [link("Security", "/app/security")] };
+      ? { text: "Freeze account.", cites: [link("Freeze account", href)] }
+      : { text: "Ask a leader.", cites: [link("Home", "/app")] };
   }
 
   if (facts.person && /cost|license|device|mfa|ticket|request|this person|they|them|patch|health|threatdown/.test(q)) {
@@ -94,14 +94,14 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
     return { text: "Choose who is told.", cites: [link("Settings", "/app/settings")] };
   }
 
-  if (/uptime|down|aviary|meadow|status|safe/.test(q)) {
+  if (/uptime|down|aviary|meadow|website|visitor|page load|ssl|status|safe/.test(q)) {
     return facts.degraded.length
-      ? { text: facts.degraded.join(", "), cites: [link("Home", "/app")] }
-      : { text: "Up.", cites: [link("Home", "/app")] };
+      ? { text: facts.degraded.join(", "), cites: [link("Website & systems", "/app/systems")] }
+      : { text: "Up.", cites: [link("Website & systems", "/app/systems")] };
   }
 
   if (/threatdown|endpoint|edr|isolated|malware|security/.test(q)) {
-    return { text: facts.mfaMissing ? `${facts.mfaMissing} to review.` : "Protected.", cites: [link("Security", "/app/security")] };
+    return { text: "Talon handles security.", cites: [link("Home", "/app")] };
   }
 
   if (/renew|cedar|saving|contract|vendor/.test(q)) {
@@ -111,7 +111,7 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
   }
 
   if (/backup|restore/.test(q)) {
-    return { text: "Open Security.", cites: [link("Security", "/app/security")] };
+    return { text: "Talon handles that.", cites: [link("Home", "/app")] };
   }
 
   if (/new request|new ticket|file a ticket|open a ticket|create a ticket|draft/.test(q)) {
@@ -125,13 +125,13 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
   if (/offboard|remove|last day|leaver/.test(q)) {
     const href = facts.person ? `/app/people/${facts.person.id}` : "/app/people";
     return leadership
-      ? { text: "Remove.", cites: [link("People", href)] }
+      ? { text: "Offboard user.", cites: [link("Offboard user", href)] }
       : { text: "New request.", cites: [link("New request", "/app/requests/new")] };
   }
 
   if (/onboard|add person|new hire|first day|checklist/.test(q)) {
     return leadership
-      ? { text: "Add person. Pick a role, then confirm.", cites: [link("Add person", "/app/people/add")] }
+      ? { text: "Onboard user.", cites: [link("Onboard user", "/app/people/add")] }
       : { text: "New request.", cites: [link("New request", "/app/requests/new")] };
   }
 
@@ -162,7 +162,7 @@ export function draftAssistantReply(turn: AssistantTurn): AssistantReply {
   }
 
   return {
-    text: "Ask for a person, a request, spending, or security.",
+    text: "Ask for a person, a request, or spending.",
     cites: [link("Home", "/app"), link("New request", "/app/requests/new")],
   };
 }

@@ -8,7 +8,7 @@ import { formatDay } from "@/lib/support/format";
 import type { TicketCategory, TicketStatus } from "@/lib/support/types";
 import { useFrame } from "../frame";
 import { usePageContext } from "../page-context";
-import { addTicket, addTicketNote, isFresh, setTicketStatus } from "../store";
+import { addTicket, addTicketNote, isFresh } from "../store";
 import { useDemo } from "../use-demo";
 import { Badge, fieldClass, primaryClass, statusTone } from "../ui";
 
@@ -79,11 +79,7 @@ export function RequestDetail({ id }: { id: string }) {
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{ticket.subject}</h1>
-        {demo.role === "leadership" ? (
-          <select className={fieldClass + " max-w-[10rem]"} aria-label="Status" value={ticket.status} onChange={(event) => setTicketStatus(ticket.id, event.target.value as TicketStatus)}>
-            {statuses.filter((item) => item !== "All").map((item) => <option key={item} value={item}>{label(item)}</option>)}
-          </select>
-        ) : <p className="text-sm">{label(ticket.status)}</p>}
+        <Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge>
       </div>
       <p className="text-xs text-ink/50">{ticket.id} · {formatDay(ticket.updated)}</p>
       <ul className="space-y-2">
@@ -94,10 +90,12 @@ export function RequestDetail({ id }: { id: string }) {
           </li>
         ))}
       </ul>
-      <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); if (body.trim().length < 2) return; addTicketNote(ticket.id, body.trim(), false); setBody(""); }}>
-        <textarea className={fieldClass} rows={3} value={body} onChange={(event) => setBody(event.target.value)} aria-label="Reply" />
-        <button type="submit" className={primaryClass}>Send</button>
-      </form>
+      {demo.role === "staff" ? (
+        <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); if (body.trim().length < 2) return; addTicketNote(ticket.id, body.trim(), false); setBody(""); }}>
+          <textarea className={fieldClass} rows={3} value={body} onChange={(event) => setBody(event.target.value)} aria-label="Reply" />
+          <button type="submit" className={primaryClass}>Send</button>
+        </form>
+      ) : null}
     </div>
   );
 }

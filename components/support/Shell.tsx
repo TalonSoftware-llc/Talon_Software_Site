@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { Home, Inbox, KeyRound, LifeBuoy, Monitor, Settings, Shield, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Home, Inbox, KeyRound, LifeBuoy, Monitor, Settings, Users, Wallet, type LucideIcon } from "lucide-react";
 import { getSupportRepository } from "@/lib/support/data";
 import AssistantPanel from "./AssistantPanel";
 import { FrameProvider, useFrame } from "./frame";
-import { bootDemo, markNotice, pushLiveTicket, recoverService, setAssistantOpen, setRole, setWorkspace, tickPulse } from "./store";
+import { bootDemo, markNotice, pushLiveTicket, recoverService, setRole, setWorkspace, tickPulse } from "./store";
 import { useDemo } from "./use-demo";
 
 const repo = getSupportRepository(null);
@@ -16,7 +16,6 @@ const leadershipNav: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/app", label: "Home", icon: Home },
   { href: "/app/people", label: "People", icon: Users },
   { href: "/app/requests", label: "Requests", icon: Inbox },
-  { href: "/app/security", label: "Security", icon: Shield },
   { href: "/app/spending", label: "Spending", icon: Wallet },
 ];
 
@@ -63,7 +62,6 @@ function Chrome({ children }: { children: ReactNode }) {
   const path = publicPath(pathname);
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
-  const [sheet, setSheet] = useState(false);
   const [navPath, setNavPath] = useState(path);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -71,7 +69,6 @@ function Chrome({ children }: { children: ReactNode }) {
   if (navPath !== path) {
     setNavPath(path);
     setNavOpen(false);
-    setSheet(false);
     setSearchOpen(false);
   }
 
@@ -93,16 +90,11 @@ function Chrome({ children }: { children: ReactNode }) {
 
   const workspace = repo.workspace(demo.workspaceId);
   const onAssistant = path === "/app/assistant";
-  const showDock = demo.hydrated && demo.assistantOpen && !onAssistant;
-  const notices = [...demo.liveNotices, ...repo.notices(demo.workspaceId)];
+  const showDock = demo.hydrated && !onAssistant;
+  const notices = [...demo.liveNotices, ...repo.notices(demo.workspaceId)].filter(visibleNotice);
   const unread = notices.filter((notice) => !demo.readNoticeIds.includes(notice.id)).length;
   const hits = searchHits(demo.workspaceId, demo.tickets[demo.workspaceId] ?? [], query);
   const nav = demo.role === "staff" ? staffNav : leadershipNav;
-
-  function toggleAsk() {
-    if (window.matchMedia("(min-width: 1024px)").matches) setAssistantOpen(!demo.assistantOpen);
-    else setSheet(true);
-  }
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-[#f3f5f7] text-ink">
@@ -156,8 +148,6 @@ function Chrome({ children }: { children: ReactNode }) {
                 </div>
               ) : null}
             </div>
-            <button type="button" className="rounded-md bg-pine px-2 py-1 text-sm font-semibold text-white lg:hidden" onClick={() => setSheet(true)}>Ask</button>
-            <button type="button" className="hidden rounded-md border border-[#d5dde6] px-2 py-1 text-sm lg:inline" onClick={toggleAsk}>{demo.assistantOpen ? "Hide" : "Ask"}</button>
             <label className="sr-only" htmlFor="workspace">Workspace</label>
             <select id="workspace" className="hidden rounded-md border border-[#d5dde6] px-2 py-1 text-sm md:block" value={demo.workspaceId} onChange={(event) => setWorkspace(event.target.value)}>
               {repo.workspaces().map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -170,7 +160,7 @@ function Chrome({ children }: { children: ReactNode }) {
           </header>
           <div className="flex min-h-0 flex-1">
             <main className="min-w-0 flex-1 overflow-y-auto">
-              {demo.hydrated ? <div className="p-4 md:p-6">{children}</div> : (
+              {demo.hydrated ? <div className={`p-4 md:p-6 ${showDock ? "pb-80 lg:pb-6" : ""}`}>{children}</div> : (
                 <div className="p-6"><div className="h-8 w-48 animate-pulse rounded bg-[#e4e9ee]" /><div className="mt-4 h-40 animate-pulse rounded-xl bg-[#e4e9ee]" /></div>
               )}
             </main>
@@ -195,19 +185,24 @@ function Chrome({ children }: { children: ReactNode }) {
           </div>
         </div>
       ) : null}
-      {sheet ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Close assistant" onClick={() => setSheet(false)} />
-          <div className="absolute inset-y-0 right-0 flex w-[min(100%,22.5rem)] bg-white shadow-xl"><AssistantPanel /></div>
+      {showDock ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex h-72 flex-col border-t border-[#e1e6ec] bg-white lg:hidden">
+          <AssistantPanel inputId="assistant-ask-mobile" />
         </div>
       ) : null}
-      <div className="pointer-events-none fixed bottom-4 left-4 z-50 flex w-56 flex-col gap-2" aria-live="polite">
+      <div className={`pointer-events-none fixed left-4 z-50 flex w-56 flex-col gap-2 ${showDock ? "bottom-80 lg:bottom-4" : "bottom-4"}`} aria-live="polite">
         {demo.toasts.map((toast) => (
           <div key={toast.id} className="pointer-events-auto rounded-lg border border-[#e1e6ec] bg-white px-3 py-2 text-sm font-semibold shadow-lg">{toast.title}</div>
         ))}
       </div>
     </div>
   );
+}
+
+function visibleNotice(notice: { title: string; href: string }): boolean {
+  const text = `${notice.title} ${notice.href}`.toLowerCase();
+  if (text.includes("/security")) return false;
+  return !/spend|renew|cedar|invoice|billing|budget/.test(text);
 }
 
 function searchHits(workspaceId: string, tickets: { id: string; subject: string; status: string }[], query: string) {
@@ -218,5 +213,7 @@ function searchHits(workspaceId: string, tickets: { id: string; subject: string;
     .filter((ticket) => `${ticket.id} ${ticket.subject}`.toLowerCase().includes(q))
     .slice(0, 4)
     .map((ticket) => ({ kind: "Request" as const, id: ticket.id, label: ticket.subject, href: `/app/requests/${ticket.id}` }));
-  return [...ticketHits, ...people.map((hit) => ({ kind: hit.kind, id: hit.id, label: hit.label, href: hit.href }))].slice(0, 8);
+  return [...ticketHits, ...people.map((hit) => ({ kind: hit.kind, id: hit.id, label: hit.label, href: hit.href }))]
+    .filter((hit) => !hit.href.includes("/security"))
+    .slice(0, 8);
 }

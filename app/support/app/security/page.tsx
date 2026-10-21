@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { SecurityHome } from "@/components/support/views/Security";
-
-export default function SecurityPage() {
-  return <SecurityHome />;
+export default function Page() {
+  redirect("/app");
 }
