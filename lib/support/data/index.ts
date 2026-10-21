@@ -9,6 +9,7 @@ import { mockRepository } from "./mock";
  */
 export type SupportRepository = typeof mockRepository;
 
-export function getSupportRepository(_principal: SupportPrincipal | null): SupportRepository {
+export function getSupportRepository(principal: SupportPrincipal | null): SupportRepository {
+  void principal;
   return mockRepository;
 }

@@ -269,6 +269,21 @@ function Chrome({ children }: { children: ReactNode }) {
               ))}
               <Link href={href("/app/settings")} className="block rounded-md px-2 py-2 text-sm">Settings</Link>
             </div>
+            <div className="mt-4 space-y-2 text-sm">
+              <label className="block text-xs text-white/60" htmlFor="mobile-workspace">Workspace</label>
+              <select id="mobile-workspace" className="w-full rounded-md bg-white px-2 py-1 text-ink" value={demo.workspaceId} onChange={(event) => setWorkspace(event.target.value)}>
+                {repo.workspaces().map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+              <div className="flex rounded-md bg-white p-0.5 text-xs font-semibold text-ink" aria-label="Demo view">
+                {(["leadership", "staff"] as const).map((role) => (
+                  <button key={role} type="button" className={`flex-1 rounded px-2 py-1 capitalize ${demo.role === role ? "bg-ink text-white" : ""}`} onClick={() => setRole(role)}>
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

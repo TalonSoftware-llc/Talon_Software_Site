@@ -88,6 +88,11 @@ export function PeopleDirectory() {
           <FilterChip label={`${people.filter((person) => personFlags(person).includes("Still licensed")).length} offboarding, still licensed`} onClick={() => setFlag(flag === "licensed" ? null : "licensed")} pressed={flag === "licensed"} />
           <FilterChip label={`${people.filter((person) => personFlags(person).includes("Refresh due")).length} devices due`} onClick={() => setFlag(flag === "refresh" ? null : "refresh")} pressed={flag === "refresh"} />
           <Link href={href("/app/people/audit")} className={quietClass}>Audit log</Link>
+          {department ? <button type="button" className={quietClass} onClick={() => {
+            const next = new URLSearchParams(params.toString());
+            next.delete("department");
+            router.replace(`${href("/app/people")}?${next.toString()}`);
+          }}>Clear {department}</button> : null}
         </div>
       ) : null}
       <div className="grid gap-3 lg:grid-cols-[2fr,1fr]">
@@ -151,6 +156,38 @@ export function PeopleDirectory() {
       </div>
     </div>
   );
+}
+
+function timeline(
+  person: { name: string; role: string; startDate: string; mfa: boolean; training: string; health: { patch: string; checkIn: string }; devices: { name: string; threatdown: string }[] },
+  tickets: { id: string; subject: string; opened: string; status: string }[],
+  audit: { id: string; at: string; action: string; target: string; detail: string }[],
+): { key: string; when: string; label: string; sort: string }[] {
+  const rows = [
+    { key: "start", sort: person.startDate, when: formatDay(person.startDate), label: `Started as ${person.role}.` },
+    { key: "mfa", sort: person.mfa ? person.startDate : "2026-10-21", when: person.mfa ? "Enrolled" : "Open", label: person.mfa ? "MFA is on this account." : "MFA is not enrolled." },
+    { key: "training", sort: "2026-09-01", when: "Training", label: `Security training is ${person.training.toLowerCase()}.` },
+    { key: "patch", sort: person.health.checkIn, when: formatDay(person.health.checkIn), label: `Devices checked in. Patches are ${person.health.patch.toLowerCase()}.` },
+    ...person.devices.filter((device) => device.threatdown !== "Protected").map((device) => ({
+      key: device.name,
+      sort: person.health.checkIn,
+      when: "ThreatDown",
+      label: `${device.name} is ${device.threatdown.toLowerCase()}.`,
+    })),
+    ...tickets.map((ticket) => ({
+      key: ticket.id,
+      sort: ticket.opened,
+      when: formatDay(ticket.opened),
+      label: `Opened ${ticket.id}: ${ticket.subject} (${ticket.status.toLowerCase()}).`,
+    })),
+    ...audit.filter((entry) => entry.target === person.name).map((entry) => ({
+      key: entry.id,
+      sort: entry.at,
+      when: formatDay(entry.at),
+      label: `${entry.action}. ${entry.detail}`,
+    })),
+  ];
+  return rows.sort((a, b) => b.sort.localeCompare(a.sort));
 }
 
 function FilterChip({ label, onClick, pressed }: { label: string; onClick: () => void; pressed: boolean }) {
@@ -242,12 +279,15 @@ export function PersonProfile({ id }: { id: string }) {
       </Card>
       <Card>
         <h2 className="font-semibold">Activity</h2>
-        <ul className="mt-2 space-y-1 text-sm text-ink/70">
-          <li>Started {formatDay(person.startDate)}.</li>
-          <li>{person.mfa ? "MFA is enrolled." : "MFA is not enrolled."}</li>
-          <li>Security training is {person.training.toLowerCase()}.</li>
-          <li>Patch status is {person.health.patch.toLowerCase()} as of {person.health.checkIn}.</li>
-        </ul>
+        <ol className="mt-3 space-y-3 border-l border-[#e1e6ec] pl-4 text-sm">
+          {timeline(person, tickets, demo.audit[demo.workspaceId] ?? []).map((event) => (
+            <li key={event.key} className="relative">
+              <span className="absolute -left-[1.3rem] top-1.5 h-2 w-2 rounded-full bg-pine" />
+              <p className="text-xs text-ink/45">{event.when}</p>
+              <p>{event.label}</p>
+            </li>
+          ))}
+        </ol>
       </Card>
     </div>
   );

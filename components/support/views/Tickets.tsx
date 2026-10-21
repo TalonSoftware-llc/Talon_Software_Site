@@ -22,7 +22,7 @@ export function TicketList() {
   const params = useSearchParams();
   const [sort, setSort] = useState<"updated" | "priority">("updated");
   const [text, setText] = useState("");
-  usePageContext({ section: "tickets", title: "Tickets", hints: ["Which tickets are outside the SLA?", "How do I reset a password?", "The printer is jammed"] });
+  usePageContext({ section: "tickets", title: "Tickets", hints: ["Which tickets are outside the SLA?", "How do I reset a password?", "How do I file a ticket?"] });
   const status = params.get("status") ?? "All";
   const priority = params.get("priority") ?? "All";
   const category = params.get("category") ?? "All";

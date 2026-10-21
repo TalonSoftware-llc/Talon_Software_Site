@@ -93,12 +93,15 @@ export default function Overview() {
         </Card>
         <Card>
           <h2 className="font-semibold">Your devices</h2>
-          <ul className="mt-2 text-sm text-ink/70">
+          <ul className="mt-2 space-y-2 text-sm text-ink/70">
             {(persona?.devices ?? []).map((device) => (
-              <li key={device.id}>{device.name} · patches {persona?.health.patch.toLowerCase()}</li>
+              <li key={device.id}>
+                {device.name} · {device.join === "Entra" ? "Entra joined" : "Google enrolled"} as {device.primaryUser}
+                <span className="block">Patches {persona?.health.patch.toLowerCase()} · ThreatDown {device.threatdown}</span>
+              </li>
             ))}
           </ul>
-          <Link href={href("/app/help")} className="mt-3 inline-block text-sm font-semibold text-pine underline">Fix something without a ticket</Link>
+          <Link href={href("/app/help/password")} className="mt-3 inline-block text-sm font-semibold text-pine underline">Password and MFA</Link>
         </Card>
       </div>
     );
