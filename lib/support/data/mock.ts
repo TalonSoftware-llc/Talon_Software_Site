@@ -657,7 +657,7 @@ function economics(people: Person[], input: {
   const telecomMonthly = input.telecom.reduce((sum, item) => sum + item.amount, 0);
   const securityMonthly = input.security.reduce((sum, item) => sum + item.amount, 0);
   const breakdown: SpendSlice[] = [
-    { name: "Talon retainer", amount: input.retainer, lines: [{ name: "Monthly retainer (sample)", amount: input.retainer }] },
+    { name: "Talon retainer", amount: input.retainer, lines: [{ name: "Monthly retainer", amount: input.retainer }] },
     { name: "Software", amount: softwareMonthly, lines: software.map((item) => ({ name: item.name, amount: item.monthly })) },
     { name: "Cloud and hosting", amount: cloudMonthly, lines: input.cloud },
     { name: "Hardware", amount: hardwareMonthly, lines: input.hardware },

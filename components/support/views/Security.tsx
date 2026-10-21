@@ -9,7 +9,7 @@ import { useFrame } from "../frame";
 import { usePageContext } from "../page-context";
 import { sendCompromiseAlert } from "../store";
 import { useDemo } from "../use-demo";
-import { fieldClass, primaryClass, quietClass } from "../ui";
+import { cardClass, fieldClass, primaryClass, quietClass } from "../ui";
 
 const repo = getSupportRepository(null);
 
@@ -29,6 +29,15 @@ export function SecurityHome() {
   const [open, setOpen] = useState(false);
   const people = demo.people[demo.workspaceId] ?? [];
   const { count, devices } = posture(demo.workspaceId, people, demo.serviceUp);
+  const services = repo.executive(demo.workspaceId, "30d").services.map((service) =>
+    service.id === "aviary" && demo.serviceUp ? { ...service, status: "Operational" as const } : service,
+  );
+  const alerts = services.filter((service) => service.status !== "Operational");
+  const missing = people.filter((person) => person.status === "Active" && !person.mfa).length;
+  const allDevices = people.flatMap((person) => person.devices);
+  const protectedCount = allDevices.filter((device) => device.threatdown === "Protected").length;
+  const ratio = allDevices.length ? protectedCount / allDevices.length : 1;
+  const ring = 2 * Math.PI * 42;
   usePageContext({ section: "security", title: "Security", hints: ["Am I safe?", "Lock an account"] });
   if (demo.role !== "leadership") return null;
 
@@ -38,15 +47,50 @@ export function SecurityHome() {
         <h1 className="text-2xl font-semibold tracking-tight">Security</h1>
         <Link href={href("/app/security/lock")} className={primaryClass}>Lock account & alert company</Link>
       </div>
-      <div className="rounded-xl border border-[#e1e6ec] bg-white p-4 shadow-sm">
-        <p className="text-3xl font-semibold">{count ? "Needs attention" : "Protected"}</p>
-        <p className="mt-1 text-sm tabular-nums">{count} to review</p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <section className={cardClass}>
+          <div className="flex items-center gap-3">
+            <span className={`h-3 w-3 rounded-full ${count ? "bg-[#c4a574]" : "bg-[#1f4d45]"}`} />
+            <p className="text-2xl font-semibold">{count ? "Needs attention" : "Protected"}</p>
+          </div>
+          <ul className="mt-4 divide-y divide-[#eef2f5]">
+            {missing ? (
+              <li className="flex items-center justify-between gap-3 py-3 text-sm">
+                <span>{missing} people without MFA</span>
+                <Link href={href("/app/people?flag=mfa")} className={primaryClass}>Require MFA</Link>
+              </li>
+            ) : null}
+            {devices.length ? (
+              <li className="flex items-center justify-between gap-3 py-3 text-sm">
+                <span>{devices.length} devices need attention</span>
+                <button type="button" className={quietClass} onClick={() => setOpen(true)}>Update devices</button>
+              </li>
+            ) : null}
+            {alerts.map((service) => (
+              <li key={service.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <span>{service.name} · {service.id === "aviary" || service.id === "meadow" ? "Charting" : "System"}</span>
+                <button type="button" className={quietClass} onClick={() => setOpen(true)}>Review alert</button>
+              </li>
+            ))}
+            {!count ? <li className="py-3 text-sm">Protected</li> : null}
+          </ul>
+        </section>
+        <section className={`${cardClass} flex flex-col items-center justify-center`}>
+          <svg viewBox="0 0 120 120" className="h-36 w-36" role="img" aria-label={`${protectedCount} of ${allDevices.length} protected`}>
+            <circle cx="60" cy="60" r="42" fill="none" stroke="#e6ebf0" strokeWidth="10" />
+            <circle cx="60" cy="60" r="42" fill="none" stroke="#1f4d45" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${ring * ratio} ${ring}`} transform="rotate(-90 60 60)" />
+            <text x="60" y="58" textAnchor="middle" className="fill-ink" fontSize="16" fontWeight="700">{protectedCount}/{allDevices.length}</text>
+            <text x="60" y="76" textAnchor="middle" className="fill-ink" fontSize="9" fill="#5c6b7a">Protected</text>
+          </svg>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Protected devices</p>
+        </section>
       </div>
       <button type="button" className={quietClass} onClick={() => setOpen((value) => !value)}>Details</button>
       {open ? (
-        <ul className="space-y-1 text-sm">
-          {devices.map((device) => <li key={device.id}>{device.person} · {device.name} · Needs attention</li>)}
-          {devices.length === 0 ? <li>None</li> : null}
+        <ul className={`${cardClass} space-y-2 text-sm`}>
+          {devices.map((device) => <li key={device.id}>{device.person} · {device.name}</li>)}
+          {alerts.map((service) => <li key={service.id}>{service.name} · {service.status === "Down" ? "Down" : "Slow"}</li>)}
+          {devices.length === 0 && alerts.length === 0 ? <li>None</li> : null}
         </ul>
       ) : null}
     </div>

@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { getSupportRepository } from "@/lib/support/data";
 import { onboardTemplates } from "@/lib/support/identity";
-import type { Department } from "@/lib/support/types";
+import type { Department, PersonStatus } from "@/lib/support/types";
 import { StepUp } from "../StepUp";
 import { usePageContext } from "../page-context";
 import { offboardPerson, onboardPerson, updatePerson } from "../store";
 import { useFrame } from "../frame";
 import { useDemo } from "../use-demo";
-import { fieldClass, primaryClass, quietClass } from "../ui";
+import { Avatar, Badge, fieldClass, primaryClass, quietClass, statusTone } from "../ui";
 
 const repo = getSupportRepository(null);
 const checks = ["Mailbox", "Practice system", "MFA", "Clinic group", "Device"];
@@ -22,6 +22,7 @@ export function PeopleDirectory() {
   const { href } = useFrame();
   const [query, setQuery] = useState("");
   const flag = params.get("flag") === "mfa";
+  const tickets = demo.tickets[demo.workspaceId] ?? [];
   const people = (demo.people[demo.workspaceId] ?? []).filter((person) => {
     const matches = `${person.name} ${person.role} ${person.location}`.toLowerCase().includes(query.toLowerCase());
     return matches && (!flag || (person.status === "Active" && !person.mfa));
@@ -42,19 +43,40 @@ export function PeopleDirectory() {
       <div className="overflow-x-auto rounded-xl border border-[#e1e6ec] bg-white">
         <table className="w-full text-left text-sm">
           <thead className="text-xs uppercase tracking-[0.12em] text-ink/45">
-            <tr><th className="px-3 py-2">Name</th><th className="px-3 py-2">Role</th><th className="px-3 py-2">Clinic</th></tr>
+            <tr>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-3 py-3">Role</th>
+              <th className="px-3 py-3">Clinic</th>
+              <th className="px-3 py-3">Requests</th>
+              <th className="px-3 py-3">Status</th>
+              <th className="px-4 py-3" />
+            </tr>
           </thead>
           <tbody>
-            {people.map((person) => (
-              <tr key={person.id} className="border-t border-[#f3f5f7]">
-                <td className="px-3 py-2"><Link href={href(`/app/people/${person.id}`)} className="font-semibold text-pine underline">{person.name}</Link></td>
-                <td className="px-3 py-2">{person.role}</td>
-                <td className="px-3 py-2">{person.location}{person.status === "Active" ? "" : ` · ${person.status}`}</td>
-              </tr>
-            ))}
+            {people.map((person) => {
+              const requests = tickets.filter((ticket) => ticket.requesterId === person.id && ticket.status !== "Resolved").length;
+              return (
+                <tr key={person.id} className="border-t border-[#f3f5f7]">
+                  <td className="px-4 py-3">
+                    <Link href={href(`/app/people/${person.id}`)} className="flex items-center gap-2 font-semibold text-ink">
+                      <Avatar name={person.name} size="sm" />
+                      {person.name}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3">{person.role}</td>
+                  <td className="px-3 py-3">{person.location}</td>
+                  <td className="px-3 py-3 tabular-nums">{requests}</td>
+                  <td className="px-3 py-3"><Badge tone={statusTone(person.status)}>{person.status}</Badge></td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={href(`/app/people/${person.id}`)} className="font-semibold text-pine">Edit</Link>
+                    <Link href={href(`/app/people/${person.id}?remove=1`)} className="ml-3 font-semibold text-ink/60">Remove</Link>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        {people.length === 0 ? <p className="px-3 py-6 text-sm">None</p> : null}
+        {people.length === 0 ? <p className="px-4 py-6 text-sm">None</p> : null}
       </div>
     </div>
   );
@@ -64,8 +86,9 @@ export function PersonProfile({ id }: { id: string }) {
   const demo = useDemo();
   const { href } = useFrame();
   const router = useRouter();
+  const params = useSearchParams();
   const person = (demo.people[demo.workspaceId] ?? []).find((item) => item.id === id);
-  const [mode, setMode] = useState<"view" | "edit" | "remove" | "confirm">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "remove" | "confirm">(params.get("remove") === "1" ? "remove" : "view");
   const [role, setRole] = useState(person?.role ?? "");
   const [department, setDepartment] = useState<Department>(person?.department ?? "Clinical");
   const [details, setDetails] = useState(false);
@@ -76,7 +99,13 @@ export function PersonProfile({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{person.name}</h1>
+        <div className="flex items-center gap-3">
+          <Avatar name={person.name} size="lg" />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{person.name}</h1>
+            <Badge tone={statusTone(person.status)}>{person.status as PersonStatus}</Badge>
+          </div>
+        </div>
         <span className="flex gap-2">
           <button type="button" className={primaryClass} onClick={() => setMode("edit")}>Edit</button>
           <button type="button" className={quietClass} onClick={() => setMode("remove")}>Remove</button>

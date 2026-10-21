@@ -9,6 +9,8 @@ export const primaryClass =
 export const quietClass =
   "inline-flex items-center justify-center rounded-md border border-[#d5dde6] bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-pine/40";
 
+export const cardClass = "rounded-xl border border-[#e1e6ec] bg-white p-5 shadow-sm";
+
 const tones = {
   ok: "bg-[#e7f3ef] text-[#1f4d45]",
   warn: "bg-[#f8f1de] text-[#6d5420]",
@@ -21,9 +23,9 @@ export function Badge({ children, tone = "mute" }: { children: ReactNode; tone?:
 }
 
 export function statusTone(status: string): keyof typeof tones {
-  if (status === "Open" || status === "Gap" || status === "Due" || status === "Degraded" || status === "Threats" || status === "Behind" || status === "Pending") return "warn";
+  if (status === "Open" || status === "Waiting" || status === "Onboarding" || status === "Gap" || status === "Due" || status === "Degraded" || status === "Threats" || status === "Behind" || status === "Pending") return "warn";
   if (status === "Urgent" || status === "Down" || status === "Offboarding" || status === "Isolated") return "bad";
-  if (status === "In progress" || status === "Operational" || status === "Met" || status === "Current" || status === "Paid" || status === "Protected" || status === "Delivered") return "ok";
+  if (status === "Active" || status === "Resolved" || status === "In progress" || status === "Operational" || status === "Met" || status === "Current" || status === "Paid" || status === "Protected" || status === "Delivered") return "ok";
   return "mute";
 }
 

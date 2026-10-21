@@ -10,7 +10,7 @@ import { useFrame } from "../frame";
 import { usePageContext } from "../page-context";
 import { addTicket, addTicketNote, isFresh, setTicketStatus } from "../store";
 import { useDemo } from "../use-demo";
-import { fieldClass, primaryClass } from "../ui";
+import { Badge, fieldClass, primaryClass, statusTone } from "../ui";
 
 const repo = getSupportRepository(null);
 const statuses: Array<TicketStatus | "All"> = ["All", "Open", "Waiting", "In progress", "Resolved"];
@@ -39,11 +39,15 @@ export function RequestList() {
         <h1 className="text-2xl font-semibold tracking-tight">{demo.role === "staff" ? "My requests" : "Requests"}</h1>
         <Link href={href("/app/requests/new")} className={primaryClass}>New request</Link>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input className={fieldClass + " max-w-xs"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search" />
-        <select className={fieldClass + " max-w-[10rem]"} aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value as (typeof statuses)[number])}>
-          {statuses.map((item) => <option key={item} value={item}>{label(item)}</option>)}
-        </select>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Status">
+          {statuses.map((item) => (
+            <button key={item} type="button" aria-pressed={status === item} className={`rounded-full px-3 py-1 text-sm font-semibold ${status === item ? "bg-pine text-white" : "border border-[#d5dde6] bg-white text-ink"}`} onClick={() => setStatus(item)}>
+              {label(item)}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="overflow-hidden rounded-xl border border-[#e1e6ec] bg-white">
         {tickets.length ? (
@@ -52,7 +56,7 @@ export function RequestList() {
               <li key={ticket.id}>
                 <Link href={href(`/app/requests/${ticket.id}`)} className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-[#f7f9fb]">
                   <span><span className="font-semibold">{ticket.subject}</span><span className="mt-0.5 block text-ink/50">{ticket.id}</span></span>
-                  <span className="shrink-0 text-ink/70">{isFresh(ticket.id) ? "Just now" : label(ticket.status)}</span>
+                  {isFresh(ticket.id) ? <Badge tone="ok">Just now</Badge> : <Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge>}
                 </Link>
               </li>
             ))}
