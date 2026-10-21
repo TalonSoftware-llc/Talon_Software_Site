@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
-import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "How we work | Talon Software",
@@ -32,9 +31,7 @@ const steps = [
   },
 ];
 
-export default async function HowWeWorkPage() {
-  const contact = await areaHref("consulting", "/contact");
-
+export default function HowWeWorkPage() {
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">How we work</h1>
@@ -59,7 +56,7 @@ export default async function HowWeWorkPage() {
           <li>Accounts are issued in a named user. No shared passwords. Hardware-key MFA.</li>
           <li>If a client runs over the planned hours for two months, the scope is reset.</li>
         </ul>
-        <Link href={contact} className="mt-4 inline-block font-medium text-ink underline">
+        <Link href="/contact" className="mt-4 inline-block font-medium text-ink underline">
           Book the discovery call
         </Link>
       </section>

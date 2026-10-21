@@ -51,7 +51,7 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Locally there is no custom host, so each area is a path: `/` (main), `/consulting`, `/engineering`, and `/support`. On the deployed domains the same pages are chosen from the `Host` header. The main domain is `NEXT_PUBLIC_SITE_URL`, defaulting to `https://talonsoftware.dev`. See `VERCEL_SETUP.md` for the domains to attach.
+Locally there is no custom host, so each area is a path: `/` (the practice site), `/consulting`, `/engineering`, and `/support`. On the deployed domains the same pages are chosen from the `Host` header. The main domain is `NEXT_PUBLIC_SITE_URL`, defaulting to `https://talonsoftware.dev`. See `VERCEL_SETUP.md` for the domains to attach.
 
 ## Project Structure
 

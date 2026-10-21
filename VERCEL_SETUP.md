@@ -35,22 +35,22 @@ Attach every domain to the same Vercel project. The app reads the `Host` header 
 
 | Domain | Area | What it serves |
 | --- | --- | --- |
-| `talonsoftware.dev` | Main | Company front door, about, products, privacy, and terms. Set `NEXT_PUBLIC_SITE_URL` to this origin. |
-| `talon.consulting` | Consulting | Fractional CTO plans, services, how we work, FAQ, and the discovery-call form. |
-| `talon.engineering` | Engineering | Coming soon. |
-| `talon.support` | Support | Client support portal shell. Sign-in is not wired up. |
+| `talonsoftware.dev` | Main | The fractional CTO practice: home, plans, services, how we work, FAQ, contact, and the rest of the original site. Set `NEXT_PUBLIC_SITE_URL` to this origin. |
+| `talon.consulting` | Consulting | Project consulting: AI, systems, assessments, and integrations. Its own contact page posts to the same `/api/contact` route. |
+| `talon.engineering` | Engineering | A standalone coming-soon page. No shared site header. |
+| `talon.support` | Support | Talon Support sign-in and a demo app. The form does not send or store credentials. |
 | `talon.software` (later) | Main | Replace `talonsoftware.dev` by changing `NEXT_PUBLIC_SITE_URL` and attaching the domain. |
 
 `www` on any of those hosts permanently redirects to the apex host.
 
 Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. Use a path instead:
 
-- `/` main
-- `/consulting` and `/consulting/plans`
+- `/` and the original pages (`/plans`, `/contact`, `/faq`, and the rest) on the main site
+- `/consulting`, `/consulting/services`, `/consulting/process`, `/consulting/contact`
 - `/engineering`
-- `/support`, `/support/sign-in`, `/support/ai`, `/support/tickets`, `/support/processes`, `/support/information`
+- `/support` for sign-in, then `/support/app`, `/support/app/assistant`, `/support/app/tickets`, `/support/app/knowledge`, `/support/app/company`
 
-On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/plans`, not `https://talonsoftware.dev/consulting/plans`), so the same page is not indexed twice. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
+On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/services`, not `https://talonsoftware.dev/consulting/services`), so the same page is not indexed twice. `/plans` and `/contact` on `talonsoftware.dev` stay on that domain. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
 
 ## How to Add Environment Variables in Vercel
 

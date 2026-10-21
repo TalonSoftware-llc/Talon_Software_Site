@@ -5,8 +5,9 @@
  * Change that single value when talon.software replaces talonsoftware.dev.
  * Area hosts live in this file so they are not repeated through the app.
  *
- * On a real area host, public URLs have no prefix: https://talon.consulting/plans.
- * On localhost and *.vercel.app, the same page is /consulting/plans.
+ * On a real area host, public URLs have no prefix: https://talon.consulting/services.
+ * On localhost and *.vercel.app, the same page is /consulting/services.
+ * The main site keeps its original paths (/plans, /contact, and the rest).
  */
 
 export type AreaId = "main" | "consulting" | "engineering" | "support";
@@ -56,14 +57,9 @@ export function areaCatalog(mainHostname = defaultMainHostname()): Record<AreaId
       id: "main",
       host: mainHostname,
       prefix: "",
-      paths: ["/", "/about", "/products", "/products/coming-soon", "/privacy", "/terms"],
-    },
-    consulting: {
-      id: "consulting",
-      host: "talon.consulting",
-      prefix: "/consulting",
       paths: [
         "/",
+        "/about",
         "/plans",
         "/assessments",
         "/how-we-work",
@@ -72,7 +68,17 @@ export function areaCatalog(mainHostname = defaultMainHostname()): Record<AreaId
         "/offer",
         "/work",
         "/partners",
+        "/products",
+        "/products/coming-soon",
+        "/privacy",
+        "/terms",
       ],
+    },
+    consulting: {
+      id: "consulting",
+      host: "talon.consulting",
+      prefix: "/consulting",
+      paths: ["/", "/services", "/process", "/contact"],
     },
     engineering: {
       id: "engineering",
@@ -84,7 +90,7 @@ export function areaCatalog(mainHostname = defaultMainHostname()): Record<AreaId
       id: "support",
       host: "talon.support",
       prefix: "/support",
-      paths: ["/", "/sign-in", "/ai", "/tickets", "/processes", "/information"],
+      paths: ["/", "/app", "/app/assistant", "/app/tickets", "/app/knowledge", "/app/company"],
     },
   };
 }
@@ -188,15 +194,21 @@ function resolveDomain(area: AreaId, pathname: string, catalog: Record<AreaId, A
   const own = catalog[area];
   const ownStripped = stripPrefix(pathname, own.prefix);
   if (own.prefix && ownStripped !== null) {
-    return { kind: "redirect", to: absoluteUrl(area, ownStripped, catalog.main.host) };
+    const target = areaForPublicPath(ownStripped, catalog, area);
+    return { kind: "redirect", to: absoluteUrl(target, ownStripped, catalog.main.host) };
   }
 
   for (const otherId of PREFIXED_AREAS) {
     if (otherId === area) continue;
     const stripped = stripPrefix(pathname, catalog[otherId].prefix);
     if (stripped !== null) {
-      return { kind: "redirect", to: absoluteUrl(otherId, stripped, catalog.main.host) };
+      const target = areaForPublicPath(stripped, catalog, otherId);
+      return { kind: "redirect", to: absoluteUrl(target, stripped, catalog.main.host) };
     }
+  }
+
+  if (pathname === "/" || ownsPublicPath(own, pathname)) {
+    return serve(area, pathname, "domain", own.prefix);
   }
 
   for (const otherId of AREA_IDS) {
@@ -206,36 +218,51 @@ function resolveDomain(area: AreaId, pathname: string, catalog: Record<AreaId, A
     }
   }
 
-  if (area === "main") {
-    return passthrough("main", "domain", pathname);
-  }
-
-  return {
-    kind: "rewrite",
-    area,
-    linkMode: "domain",
-    publicPath: pathname,
-    toPathname: pathname === "/" ? own.prefix : `${own.prefix}${pathname}`,
-  };
+  return serve(area, pathname, "domain", own.prefix);
 }
 
 function resolvePath(pathname: string, catalog: Record<AreaId, AreaDef>): RouteDecision {
   for (const id of PREFIXED_AREAS) {
     const stripped = stripPrefix(pathname, catalog[id].prefix);
-    if (stripped !== null) {
-      return passthrough(id, "path", stripped);
+    if (stripped === null) continue;
+    const target = areaForPublicPath(stripped, catalog, id);
+    if (target !== id) {
+      return { kind: "redirect", to: prefixedPath(target, stripped) };
     }
+    return passthrough(id, "path", stripped);
   }
 
-  if (pathname !== "/") {
-    for (const id of PREFIXED_AREAS) {
-      if (ownsPublicPath(catalog[id], pathname)) {
-        return { kind: "redirect", to: `${catalog[id].prefix}${pathname}` };
-      }
+  if (pathname === "/" || ownsPublicPath(catalog.main, pathname)) {
+    return passthrough("main", "path", pathname);
+  }
+
+  for (const id of PREFIXED_AREAS) {
+    if (ownsPublicPath(catalog[id], pathname)) {
+      return { kind: "redirect", to: prefixedPath(id, pathname) };
     }
   }
 
   return passthrough("main", "path", pathname);
+}
+
+function serve(area: AreaId, pathname: string, linkMode: LinkMode, prefix: string): RouteDecision {
+  if (area === "main") return passthrough("main", linkMode, pathname);
+  return {
+    kind: "rewrite",
+    area,
+    linkMode,
+    publicPath: pathname,
+    toPathname: pathname === "/" ? prefix : `${prefix}${pathname}`,
+  };
+}
+
+/** Current area wins when two areas publish the same public path, such as /contact. */
+function areaForPublicPath(pathname: string, catalog: Record<AreaId, AreaDef>, preferred: AreaId): AreaId {
+  if (pathname === "/" || ownsPublicPath(catalog[preferred], pathname)) return preferred;
+  for (const id of AREA_IDS) {
+    if (ownsPublicPath(catalog[id], pathname)) return id;
+  }
+  return preferred;
 }
 
 function modeForHost(hostname: string, catalog: Record<AreaId, AreaDef>): LinkMode {

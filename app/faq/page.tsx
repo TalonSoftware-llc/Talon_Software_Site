@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
-import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "FAQ | Talon Software",
@@ -145,9 +144,7 @@ const groups: { title: string; items: { q: string; a: string }[] }[] = [
   },
 ];
 
-export default async function FaqPage() {
-  const contact = await areaHref("consulting", "/contact");
-
+export default function FaqPage() {
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">FAQ</h1>
@@ -182,7 +179,7 @@ export default async function FaqPage() {
         ))}
       </div>
 
-      <Link href={contact} className="btn-ink mt-12">
+      <Link href="/contact" className="btn-ink mt-12">
         Request a discovery call
       </Link>
     </SiteFrame>

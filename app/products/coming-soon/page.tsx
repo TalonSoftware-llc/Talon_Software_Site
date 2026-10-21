@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SiteFrame from "@/components/SiteFrame";
-import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "Products in development | Talon Software",
@@ -9,9 +8,7 @@ export const metadata: Metadata = {
     "Office Assistant and other tools Talon Software is building.",
 };
 
-export default async function ProductsComingSoonPage() {
-  const contact = await areaHref("consulting", "/contact?interest=call");
-
+export default function ProductsComingSoonPage() {
   return (
     <SiteFrame>
       <h1 className="font-serif text-4xl font-medium tracking-tight text-ink">Products in development</h1>
@@ -33,7 +30,7 @@ export default async function ProductsComingSoonPage() {
           and consolidating information from different places.
         </p>
       </article>
-      <Link href={contact} className="mt-6 inline-block text-sm font-medium underline">
+      <Link href="/contact?interest=call" className="mt-6 inline-block text-sm font-medium underline">
         Get in touch
       </Link>
     </SiteFrame>
