@@ -16,6 +16,9 @@ body {
   .btn-ink {
     @apply inline-flex items-center justify-center rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-paper hover:bg-pine;
   }
+  .btn-line {
+    @apply inline-flex items-center justify-center rounded-md border border-ink/20 bg-transparent px-5 py-2.5 text-sm font-semibold text-ink hover:border-ink;
+  }
   .btn-on-dark {
     @apply inline-flex items-center justify-center rounded-md border border-white/30 px-5 py-2.5 text-sm font-semibold text-paper hover:bg-white/10;
   }
