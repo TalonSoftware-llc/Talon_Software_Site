@@ -48,7 +48,9 @@ Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. U
 - `/` and the original pages (`/plans`, `/contact`, `/faq`, and the rest) on the main site
 - `/consulting`, `/consulting/services`, `/consulting/process`, `/consulting/contact`
 - `/engineering`
-- `/support` for sign-in, then `/support/app`, `/support/app/assistant`, `/support/app/tickets`, `/support/app/knowledge`, `/support/app/company`
+- `/support` for sign-in, then `/support/app` and the portal sections: assistant, tickets, knowledge, people, help, company, security, projects, reports, billing, and settings
+
+The support assistant in the demo is scripted in the browser. It does not call a model. It is contained to the workspace on screen: company data is not used for training, staff replies omit leadership figures, and codes pasted into the box are not repeated.
 
 On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/services`, not `https://talonsoftware.dev/consulting/services`), so the same page is not indexed twice. `/plans` and `/contact` on `talonsoftware.dev` stay on that domain. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
 
