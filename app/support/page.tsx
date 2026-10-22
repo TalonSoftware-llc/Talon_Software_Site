@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SupportSignInPage() {
-  const demoHref = await areaHref("support", "/app");
-  return <SupportSignIn demoHref={demoHref} />;
+  const proHref = await areaHref("support", "/demo/pro");
+  const essentialsHref = await areaHref("support", "/demo/essentials");
+  return <SupportSignIn proHref={proHref} essentialsHref={essentialsHref} />;
 }

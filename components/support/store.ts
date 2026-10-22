@@ -77,10 +77,13 @@ const defaultPrefs = (): DemoPrefs => ({
   siteAlerts: { sms: false, email: true, push: true },
 });
 
+export type Tier = "pro" | "essentials";
+
 export type DemoState = {
   hydrated: boolean;
   workspaceId: string;
   role: RoleView;
+  tier: Tier;
   assistantOpen: boolean;
   tickets: Record<string, Ticket[]>;
   people: Record<string, Person[]>;
@@ -138,6 +141,7 @@ let state: DemoState = {
   hydrated: false,
   workspaceId: "granite",
   role: "leadership",
+  tier: "pro",
   assistantOpen: false,
   tickets: seedTickets(),
   people: seedPeople(),
@@ -174,6 +178,7 @@ function persist() {
     v: 4,
     workspaceId: state.workspaceId,
     role: state.role,
+    tier: state.tier,
     assistantOpen: state.assistantOpen,
     tickets: state.tickets,
     people: state.people,
@@ -228,6 +233,7 @@ function readSaved(): Partial<DemoState> | null {
       v?: number;
       workspaceId?: string;
       role?: RoleView;
+      tier?: Tier;
       assistantOpen?: boolean;
       tickets?: Record<string, unknown>;
       people?: Record<string, unknown>;
@@ -264,6 +270,7 @@ function readSaved(): Partial<DemoState> | null {
     return {
       workspaceId: parsed.workspaceId === "redline" ? "redline" : "granite",
       role: parsed.role === "staff" ? "staff" : "leadership",
+      tier: parsed.tier === "essentials" ? "essentials" : "pro",
       assistantOpen: Boolean(parsed.assistantOpen),
       tickets,
       people,
@@ -330,6 +337,17 @@ export function setRole(role: RoleView) {
   commit({ ...state, role });
 }
 
+export function enterTier(tier: Tier) {
+  bootDemo();
+  commit({
+    ...state,
+    tier,
+    workspaceId: "granite",
+    role: tier === "pro" ? "leadership" : "staff",
+    assistantOpen: false,
+  });
+}
+
 export function setAssistantOpen(assistantOpen: boolean) {
   commit({ ...state, assistantOpen });
 }
@@ -354,6 +372,7 @@ export function resetDemo() {
     ...state,
     workspaceId: "granite",
     role: "leadership",
+    tier: "pro",
     tickets: seedTickets(),
     people: seedPeople(),
     messages: [greeting],

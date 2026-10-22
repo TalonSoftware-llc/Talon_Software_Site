@@ -44,10 +44,12 @@ export function SpendPie({
   data,
   selected,
   onPick,
+  className = "h-80",
 }: {
   data: { name: string; amount: number }[];
   selected?: string;
   onPick?: (name: string) => void;
+  className?: string;
 }) {
   const [tip, setTip] = useState<{ name: string; amount: number; left: number; top: number; transform: string } | null>(null);
 
@@ -63,7 +65,7 @@ export function SpendPie({
   }
 
   return (
-    <div className="relative h-80 w-full min-w-0">
+    <div className={`relative w-full min-w-0 ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
+import { changesFor } from "@/lib/support/changes";
 import { getSupportRepository } from "@/lib/support/data";
 import { formatDay, money } from "@/lib/support/format";
-import { useFrame } from "../frame";
 import { usePageContext } from "../page-context";
 import { useDemo } from "../use-demo";
 import { Badge, cardClass, statusTone } from "../ui";
@@ -13,34 +12,23 @@ const repo = getSupportRepository(null);
 
 export function ProjectsList() {
   const demo = useDemo();
-  const { href } = useFrame();
-  const projects = repo.projects(demo.workspaceId);
-  usePageContext({ section: "projects", title: "Projects", hints: ["How is the Procore integration going?"] });
+  const changes = changesFor(demo.workspaceId);
+  usePageContext({ section: "projects", title: "Changes", hints: ["What changed?"] });
   if (demo.role !== "leadership") return null;
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-      <ul className="space-y-3">
-        {projects.map((project) => (
-          <li key={project.id}>
-            <Link href={href(`/app/projects/${project.id}`)} className={`${cardClass} block`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-base font-semibold">{project.name}</h2>
-                <Badge tone={statusTone(project.status)}>{project.status}</Badge>
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <div className="h-3.5 flex-1 overflow-hidden rounded-full bg-[#d5dde6]" role="progressbar" aria-valuenow={project.progress} aria-valuemin={0} aria-valuemax={100} aria-label={project.name}>
-                  <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
-                </div>
-                <span className="w-12 text-right text-base font-semibold tabular-nums">{project.progress}%</span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span>{formatDay(project.target)}</span>
-                <span className="tabular-nums">{money(project.spent)} / {money(project.budget)}</span>
-              </div>
-              <p className="mt-2 text-sm">{project.summary}</p>
-            </Link>
+      <h1 className="text-2xl font-semibold tracking-tight">Changes</h1>
+      <ul className="overflow-hidden rounded-xl border border-[#e1e6ec] bg-white">
+        {changes.map((change) => (
+          <li key={change.id} className="border-b border-[#eef2f5] px-4 py-3 last:border-b-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm tabular-nums text-ink/55">{formatDay(change.at)}</span>
+              <Badge>{change.category}</Badge>
+              <span className="text-sm text-ink/55">{change.by}</span>
+            </div>
+            <h2 className="mt-1 text-base font-semibold">{change.title}</h2>
+            <p className="mt-1 text-sm">{change.line}</p>
           </li>
         ))}
       </ul>
