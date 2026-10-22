@@ -5,7 +5,7 @@ function pill(state: "Up" | "Slow" | "Down" | "Protected"): string {
 }
 
 export function StatusPill({ children, state }: { children: string; state: "Up" | "Slow" | "Down" | "Protected" }) {
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${pill(state)}`}>{children}</span>;
+  return <span className={`motion-safe:transition-colors motion-safe:duration-700 rounded-full px-2 py-0.5 text-[10px] font-semibold ${pill(state)}`}>{children}</span>;
 }
 
 function MiniBars({ values }: { values: number[] }) {
@@ -19,9 +19,9 @@ function MiniBars({ values }: { values: number[] }) {
   );
 }
 
-export function StatusCluster({ dense = false }: { dense?: boolean }) {
+export function StatusCluster({ procore = "Slow" }: { procore?: "Slow" | "Up" }) {
   return (
-    <div className={`grid grid-cols-2 items-start gap-2 ${dense ? "" : "gap-3"}`}>
+    <div className="grid grid-cols-2 items-start gap-2">
       <article className="rounded-lg border border-[#e1e6ec] bg-white p-3 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/45">Website</h3>
@@ -40,11 +40,11 @@ export function StatusCluster({ dense = false }: { dense?: boolean }) {
           ))}
         </ul>
       </article>
-      <article className="rounded-lg border border-[#e1e6ec] bg-white p-3 shadow-sm">
+      <article className={`rounded-lg border bg-white p-3 shadow-sm motion-safe:transition-colors motion-safe:duration-700 ${procore === "Slow" ? "border-[#e2c98a]" : "border-[#e1e6ec]"}`}>
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/45">Systems</h3>
         <ul className="mt-2 space-y-1 text-xs">
           <li className="flex items-center justify-between gap-2"><span>Email</span><StatusPill state="Up">Up</StatusPill></li>
-          <li className="flex items-center justify-between gap-2"><span>Procore</span><StatusPill state="Slow">Slow</StatusPill></li>
+          <li className="flex items-center justify-between gap-2"><span>Procore</span><StatusPill state={procore}>{procore === "Slow" ? "Slow" : "Up"}</StatusPill></li>
           <li className="flex items-center justify-between gap-2"><span>Endpoints</span><StatusPill state="Protected">Protected</StatusPill></li>
         </ul>
       </article>
@@ -147,7 +147,7 @@ export function OnboardSnippet() {
     ["Start", "Nov 2"],
   ];
   return (
-    <div className="mock-lift rounded-xl border border-[#e1e6ec] bg-white shadow-[0_16px_40px_-24px_rgba(27,36,48,0.55)]" aria-hidden="true">
+    <div className="rounded-xl border border-[#e1e6ec] bg-white shadow-[0_16px_40px_-24px_rgba(27,36,48,0.55)]">
       <div className="flex items-center justify-between border-b border-[#eef2f5] px-4 py-3">
         <p className="text-sm font-semibold">Onboard user</p>
         <span className="text-ink/35">×</span>
@@ -173,7 +173,7 @@ export function ChangesSnippet() {
     ["Oct 2", "Yard phones", "Talon", "Network"],
   ];
   return (
-    <div className="mock-lift rounded-xl border border-[#e1e6ec] bg-white p-4 shadow-sm" aria-hidden="true">
+    <div className="rounded-xl border border-[#e1e6ec] bg-white p-4 shadow-sm">
       <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/45">Changes</p>
       <ul className="mt-3 divide-y divide-[#eef2f5]">
         {rows.map(([day, title, who, category]) => (
@@ -189,7 +189,7 @@ export function ChangesSnippet() {
 
 export function ReportSnippet() {
   return (
-    <div className="mock-lift rounded-xl border border-[#e1e6ec] bg-white p-4 shadow-sm" aria-hidden="true">
+    <div className="rounded-xl border border-[#e1e6ec] bg-white p-4 shadow-sm">
       <div className="flex items-end justify-between">
         <p className="font-serif text-xl text-ink">Report</p>
         <p className="text-sm font-semibold text-ink/50">October</p>

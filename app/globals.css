@@ -43,20 +43,10 @@ body {
   50% { opacity: 0.35; }
 }
 
-.fade-in { animation: fade-in 240ms ease; }
+.fade-in { animation: fade-in 280ms ease; }
 .live-dot { animation: live-pulse 2.4s ease-in-out infinite; }
-.mock-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.rise-wait { opacity: 0; transform: translateY(12px); }
-.rise-in { opacity: 1; transform: none; transition: opacity 0.6s ease, transform 0.6s ease; }
-
-@media (prefers-reduced-motion: no-preference) {
-  .mock-lift:hover { transform: translateY(-3px); box-shadow: 0 16px 40px -24px rgba(27, 36, 48, 0.45); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .fade-in,
-  .live-dot,
-  .rise-in { animation: none; transition: none; }
-  .rise-wait,
-  .mock-lift { opacity: 1; transform: none; transition: none; }
+  .live-dot { animation: none; }
 }
