@@ -38,7 +38,7 @@ export default function SupportSignIn({ proHref, essentialsHref }: { proHref: st
             </div>
           )}
         </div>
-        <section className="w-full" aria-label="Try the demo">
+        <section id="demo" className="w-full scroll-mt-6" aria-label="Try the demo">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink/45">Try the demo</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Link href={proHref} className="flex min-h-36 flex-col justify-between rounded-xl border-2 border-pine bg-white p-5 shadow-sm hover:bg-[#f3faf7]">

@@ -39,7 +39,7 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <Link href="/contact" className="btn-ink">
+          <Link href="/contact" className="btn-pine">
             Book a call
           </Link>
         </div>
@@ -57,7 +57,7 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/contact" className="btn-ink w-fit" onClick={() => setOpen(false)}>
+            <Link href="/contact" className="btn-pine w-fit" onClick={() => setOpen(false)}>
               Book a call
             </Link>
           </div>

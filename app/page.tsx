@@ -1,143 +1,164 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
+import PortalStage from "@/components/home/PortalStage";
+import Reveal from "@/components/home/Reveal";
+import { AskThread, ChangesSnippet, OnboardSnippet, RenewalList, ReportSnippet, SpendDonut, StatusCluster } from "@/components/home/snippets";
 import SiteFrame from "@/components/SiteFrame";
+import { areaHref } from "@/lib/request-site";
 
 export const metadata: Metadata = {
   title: "Talon Software",
-  description:
-    "Fractional CTO services for your business. Talon Software is based in Vancouver, WA.",
+  description: "Your IT, handled. Your leadership, informed. Serving Clark County and Portland.",
 };
 
-export default function Home() {
+const pains = [
+  { title: "Vendor mess", line: "Too many logins", icon: "boxes" },
+  { title: "Security worries", line: "Nothing is watched", icon: "shield" },
+  { title: "No one owns IT", line: "Decisions land on you", icon: "user" },
+  { title: "Surprise bills", line: "Renewals you missed", icon: "bill" },
+] as const;
+
+const rows: { title: string; line: string; visual: ReactNode }[] = [
+  {
+    title: "Systems and network watched",
+    line: "Up, slow, or down, in one place.",
+    visual: <div className="mock-lift rounded-2xl bg-[#f3f5f7] p-3"><StatusCluster /></div>,
+  },
+  {
+    title: "Spending and renewals",
+    line: "The month, and what comes due.",
+    visual: (
+      <div className="mock-lift rounded-xl border border-[#e1e6ec] bg-white p-5 shadow-sm">
+        <SpendDonut />
+        <RenewalList />
+      </div>
+    ),
+  },
+  {
+    title: "People on and off",
+    line: "Onboard, offboard, or freeze.",
+    visual: <OnboardSnippet />,
+  },
+  {
+    title: "A log of changes",
+    line: "Date, what changed, and who did it.",
+    visual: <ChangesSnippet />,
+  },
+  {
+    title: "An assistant that stays",
+    line: "Ask what is up, or what is next.",
+    visual: <div className="mock-lift"><AskThread long /></div>,
+  },
+  {
+    title: "A monthly report",
+    line: "The picture leadership needs.",
+    visual: <ReportSnippet />,
+  },
+];
+
+const steps = [
+  { n: "1", title: "Discovery call", line: "Thirty minutes" },
+  { n: "2", title: "Audit", line: "What is in place" },
+  { n: "3", title: "Monthly retainer + portal", line: "The work, and the picture" },
+];
+
+export default async function Home() {
+  const demoHref = await areaHref("support", "/#demo");
+
   return (
-    <SiteFrame>
-      <section className="mx-auto max-w-3xl text-center">
-        <p className="eyebrow">Vancouver, WA</p>
-        <h1 className="mt-5 font-serif text-5xl font-medium leading-tight tracking-tight text-ink md:text-6xl">
-          Fractional CTO services for your business
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink/75">
-          We give your business ongoing technology leadership without a full-time CTO. We take
-          the systems, the vendors, the security, and the decisions that come with them, and we
-          keep leadership informed in plain language. We stay with the business, so the next
-          question has somewhere to go.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/contact" className="btn-ink">
-            Request a discovery call
-          </Link>
-          <Link href="/assessments" className="btn-line">
-            Review the services
-          </Link>
+    <SiteFrame bare>
+      <section className="bg-paper">
+        <div className="mx-auto max-w-3xl px-6 pb-16 pt-20 text-center md:pb-20 md:pt-28">
+          <p className="eyebrow">{"Serving Clark County & Portland"}</p>
+          <h1 className="mt-5 font-serif text-5xl font-medium leading-[1.05] tracking-tight text-ink md:text-6xl">
+            Your IT, handled. Your leadership, informed.
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-ink/70">
+            The systems stay watched. Leadership gets the picture.
+          </p>
+          <Link href="/contact" className="btn-pine mt-8">Book a discovery call</Link>
         </div>
       </section>
 
-      <section className="mt-20 grid items-start gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <p className="eyebrow">What you are looking for</p>
-          <h2 className="mt-3 font-serif text-3xl font-medium text-ink">
-            Technology with a plan, a budget, and someone accountable for both
-          </h2>
-          <p className="mt-4 text-lg leading-relaxed text-ink/75">
-            The retainer is the operating picture of the company’s technology: what is in place,
-            what it costs, what is at risk, and what happens next. Talon Software keeps that
-            picture current and brings the decisions that need leadership, instead of leaving
-            them scattered across vendors.
-          </p>
-          <Link href="/contact" className="btn-ink mt-6">
-            Request a discovery call
-          </Link>
+      <section className="bg-[#e7eeeb] pb-20">
+        <div className="mx-auto max-w-5xl px-6">
+          <PortalStage demoHref={demoHref} />
         </div>
-        <aside className="rounded-xl bg-ink px-8 py-10 text-paper shadow-sm">
-          <h2 className="font-serif text-3xl font-medium text-paper">If this is you</h2>
-          <ul className="mt-6 space-y-5 text-lg leading-snug">
-            <li>Technology decisions keep coming back to you.</li>
-            <li>A security review, a vendor problem, or a stalled system is now on your desk.</li>
-            <li>A full-time CTO is more hire than the company should make.</li>
-            <li>You want one person who stays, not a new advisor every quarter.</li>
-          </ul>
-        </aside>
       </section>
 
-      <section className="mt-20">
-        <p className="eyebrow">Retainers</p>
-        <h2 className="mt-3 font-serif text-3xl font-medium text-ink">
-          Two monthly plans, quoted to the organization
-        </h2>
-        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-ink/75">
-          There is no published rate card. Price follows headcount, locations, the condition of the
-          current environment, compliance obligations, and the level of leadership involvement
-          required. Essentials runs the technology. Pro is for the decisions that sit above that
-          work.
-        </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <article className="card">
-            <h3 className="font-serif text-2xl font-medium text-ink">Essentials</h3>
-            <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed text-ink/75">
-              <li>Help desk, devices, accounts, and onboarding</li>
-              <li>Email, files, identity, and the other software already in use</li>
-              <li>Cloud, network, and the connections between systems</li>
-              <li>Licenses, renewals, vendors, and the technology budget</li>
-              <li>Baseline security: MFA, backups, endpoint protection, and access</li>
-              <li>A monthly review of what is in place, what it costs, and what needs a decision</li>
-            </ul>
-            <Link href="/plans" className="mt-4 inline-block text-sm font-semibold text-pine underline">
-              Essentials scope
-            </Link>
-          </article>
-          <article className="card">
-            <h3 className="font-serif text-2xl font-medium text-ink">Pro</h3>
-            <p className="mt-3 leading-relaxed text-ink/75">
-              The decisions Essentials does not cover. Includes the Essentials work, and adds:
-            </p>
-            <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed text-ink/75">
-              <li>Security program leadership and incident response</li>
-              <li>Cyber insurance, customer questionnaires, and audit readiness</li>
-              <li>Software selection, delivery oversight, and hiring</li>
-              <li>AI and automation decisions</li>
-              <li>A seat in leadership meetings</li>
-            </ul>
-            <Link href="/plans" className="mt-4 inline-block text-sm font-semibold text-pine underline">
-              Pro scope
-            </Link>
-          </article>
-        </div>
-        <article className="card mt-4">
-          <h3 className="font-serif text-2xl font-medium text-ink">Fixed assessments</h3>
-          <p className="mt-3 max-w-3xl leading-relaxed text-ink/75">
-            A technology, business, or network security assessment produces a written report and a
-            readout to leadership. Where a retainer is appropriate, the proposal is the final
-            section of that readout. Assessments begin at $5,000. Half of the fee is credited to
-            the first retainer month when the agreement is signed within 30 days.
-          </p>
-          <Link href="/assessments" className="mt-4 inline-block text-sm font-semibold text-pine underline">
-            Services
-          </Link>
-        </article>
+      <section className="bg-ink text-paper">
+        <ul className="mx-auto grid max-w-6xl gap-3 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
+          {pains.map((pain) => (
+            <li key={pain.title} className="rounded-xl border border-white/10 bg-white/5 px-4 py-4">
+              <PainIcon name={pain.icon} />
+              <p className="mt-3 font-semibold">{pain.title}</p>
+              <p className="mt-1 text-sm text-paper/65">{pain.line}</p>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <section className="mt-20 grid gap-10 md:grid-cols-2">
-        <div>
-          <p className="eyebrow">Not this practice</p>
-          <ul className="mt-4 space-y-2 text-ink/75">
-            <li>A company shopping for a help desk</li>
-            <li>A founder looking for a technical cofounder</li>
-            <li>A team that needs more developers, not a leader</li>
-            <li>An organization that already has a technology executive</li>
-          </ul>
-        </div>
-        <div className="rounded-xl bg-ink px-8 py-10 text-paper">
-          <h2 className="font-serif text-3xl font-medium">Discovery call</h2>
-          <p className="mt-3 text-paper/75">
-            Thirty minutes. The conversation confirms the business event, the decision-maker, and
-            whether a budget exists. Where the work is a fit, an assessment proposal follows within
-            one business day.
-          </p>
-          <Link href="/contact" className="btn-on-dark mt-6">
-            Request a discovery call
-          </Link>
+      {rows.map((row, index) => (
+        <section key={row.title} className={index % 2 === 0 ? "bg-paper" : "bg-white"}>
+          <Reveal className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 md:grid-cols-2 md:py-20">
+            <div className={index % 2 === 1 ? "md:order-2" : ""}>{row.visual}</div>
+            <div className={index % 2 === 1 ? "md:order-1" : ""}>
+              <h2 className="font-serif text-3xl font-medium tracking-tight text-ink md:text-4xl">{row.title}</h2>
+              <p className="mt-3 text-lg text-ink/70">{row.line}</p>
+            </div>
+          </Reveal>
+        </section>
+      ))}
+
+      <section className="bg-[#e7f3ef]">
+        <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+          <h2 className="font-serif text-3xl font-medium tracking-tight text-ink">How it works</h2>
+          <ol className="relative mt-10 grid gap-8 md:grid-cols-3">
+            <div className="absolute left-[8%] right-[8%] top-6 hidden h-px bg-pine/30 md:block" aria-hidden="true" />
+            {steps.map((step) => (
+              <li key={step.n} className="relative">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-pine/30 bg-white font-serif text-lg text-pine">{step.n}</div>
+                <p className="mt-4 font-semibold text-ink">{step.title}</p>
+                <p className="mt-1 text-sm text-ink/65">{step.line}</p>
+              </li>
+            ))}
+          </ol>
+          <Link href="/contact" className="btn-pine mt-10">Book a discovery call</Link>
         </div>
       </section>
     </SiteFrame>
+  );
+}
+
+function PainIcon({ name }: { name: (typeof pains)[number]["icon"] }) {
+  const common = "h-5 w-5 text-[#c4a574]";
+  if (name === "shield") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 3 5 6v6c0 4.5 3 7 7 9 4-2 7-4.5 7-9V6l-7-3Z" />
+      </svg>
+    );
+  }
+  if (name === "user") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="8" r="3" />
+        <path d="M5 19c1.5-3 3.8-4.5 7-4.5S17.5 16 19 19" />
+      </svg>
+    );
+  }
+  if (name === "bill") {
+    return (
+      <svg viewBox="0 0 24 24" className={common} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21V3Z" />
+        <path d="M9 8h6M9 12h6" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" className={common} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 8h7v12H3zM14 4h7v16h-7z" />
+    </svg>
   );
 }
