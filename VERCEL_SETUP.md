@@ -48,7 +48,7 @@ Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. U
 - `/` and the original pages (`/plans`, `/contact`, `/faq`, and the rest) on the main site
 - `/consulting`, `/consulting/services`, `/consulting/process`, `/consulting/contact`
 - `/engineering`
-- `/support` for sign-in, then `/support/app`. Pro sections: Home, People, Requests, Changes, Spending, Report, Website, Network, Systems, Settings. Essentials is requests, plus a Pro preview.
+- `/support` for sign-in, then `/support/app`. Pro sections: Home, People, Requests, Changes, Spending, Report, Website, Network, Systems, Settings. Essentials is requests, plus a Get Pro preview.
 
 The support assistant in the demo is a permanent sidebar on desktop and a collapsed bottom pill on mobile. It is scripted in the browser. It does not call a model. Answers stay in the workspace, follow the selected view, and are not used for training.
 

@@ -23,7 +23,7 @@ const proNav: { href: string; label: string; icon: LucideIcon }[] = [
 
 const essentialsNav: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/app/requests", label: "Requests", icon: Inbox },
-  { href: "/app/pro", label: "Pro", icon: LayoutGrid },
+  { href: "/app/pro", label: "Get Pro", icon: LayoutGrid },
 ];
 
 const staffNav: { href: string; label: string; icon: LucideIcon }[] = [
