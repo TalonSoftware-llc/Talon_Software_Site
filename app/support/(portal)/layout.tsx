@@ -11,6 +11,7 @@ const titles: [string, string][] = [
   ["/app/requests", "Requests | Talon Support"],
   ["/app/support", "Support | Talon Support"],
   ["/app/spending", "Spending | Talon Support"],
+  ["/app/report", "Report | Talon Support"],
   ["/app/settings", "Settings | Talon Support"],
   ["/app/password", "Reset password | Talon Support"],
   ["/app/devices", "My devices | Talon Support"],

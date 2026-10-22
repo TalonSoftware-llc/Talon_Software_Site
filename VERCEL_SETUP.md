@@ -38,7 +38,7 @@ Attach every domain to the same Vercel project. The app reads the `Host` header 
 | `talonsoftware.dev` | Main | The fractional CTO practice: home, plans, services, how we work, FAQ, contact, and the rest of the original site. Set `NEXT_PUBLIC_SITE_URL` to this origin. |
 | `talon.consulting` | Consulting | Project consulting: AI, systems, assessments, and integrations. Its own contact page posts to the same `/api/contact` route. |
 | `talon.engineering` | Engineering | A standalone coming-soon page. No shared site header. |
-| `talon.support` | Support | Talon Support sign-in and a demo app. The form does not send or store credentials. |
+| `talon.support` | Support | Talon Support sign-in and a demo app. Sign-in does not collect or store credentials. The demo has an Essentials tickets view and the full Pro portal. |
 | `talon.software` (later) | Main | Replace `talonsoftware.dev` by changing `NEXT_PUBLIC_SITE_URL` and attaching the domain. |
 
 `www` on any of those hosts permanently redirects to the apex host.
@@ -48,7 +48,7 @@ Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. U
 - `/` and the original pages (`/plans`, `/contact`, `/faq`, and the rest) on the main site
 - `/consulting`, `/consulting/services`, `/consulting/process`, `/consulting/contact`
 - `/engineering`
-- `/support` for sign-in, then `/support/app`. Sections: Home, People, Requests, Projects, Spending, Website, Network, Systems, Settings
+- `/support` for sign-in, then `/support/app`. Pro sections: Home, People, Requests, Projects, Spending, Report, Website, Network, Systems, Settings. Essentials is My requests only.
 
 The support assistant in the demo is a permanent sidebar on desktop and a collapsed bottom pill on mobile. It is scripted in the browser. It does not call a model. Answers stay in the workspace, follow the selected view, and are not used for training.
 

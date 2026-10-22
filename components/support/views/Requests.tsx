@@ -22,21 +22,26 @@ function label(status: string): string {
 
 export function RequestList() {
   const demo = useDemo();
-  const { href } = useFrame();
+  const { href, contactHref } = useFrame();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("All");
-  const requester = repo.workspace(demo.workspaceId)[demo.role === "staff" ? "staffId" : "leaderId"];
+  const essentials = demo.tier === "essentials";
+  const requester = repo.workspace(demo.workspaceId)[essentials || demo.role === "staff" ? "staffId" : "leaderId"];
+  const person = (demo.people[demo.workspaceId] ?? []).find((item) => item.id === requester);
   const tickets = (demo.tickets[demo.workspaceId] ?? []).filter((ticket) => {
-    if (demo.role === "staff" && ticket.requesterId !== requester) return false;
+    if ((essentials || demo.role === "staff") && ticket.requesterId !== requester) return false;
     if (status !== "All" && ticket.status !== status) return false;
     return `${ticket.id} ${ticket.subject}`.toLowerCase().includes(query.toLowerCase());
   });
-  usePageContext({ section: "requests", title: demo.role === "staff" ? "My requests" : "Requests", hints: ["New request", "What is open?"] });
+  usePageContext({ section: "requests", title: essentials || demo.role === "staff" ? "My requests" : "Requests", hints: ["New request", "What is open?"] });
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{demo.role === "staff" ? "My requests" : "Requests"}</h1>
+    <div className={`space-y-4 ${essentials ? "mx-auto max-w-3xl" : ""}`}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{essentials || demo.role === "staff" ? "My requests" : "Requests"}</h1>
+          {essentials && person ? <p className="mt-1 text-sm text-ink/60">{person.name}</p> : null}
+        </div>
         <Link href={href("/app/requests/new")} className={primaryClass}>New request</Link>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -63,6 +68,13 @@ export function RequestList() {
           </ul>
         ) : <p className="px-4 py-6 text-sm">None</p>}
       </div>
+      {essentials ? (
+        <section className="rounded-xl border border-[#d5e6e1] bg-[#f4faf7] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-pine">Pro</p>
+          <p className="mt-2 text-lg font-semibold">Website, people, projects, spending, and the monthly review.</p>
+          <a href={contactHref} className={`${primaryClass} mt-4`}>Talk to Talon about Pro</a>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -71,8 +83,10 @@ export function RequestDetail({ id }: { id: string }) {
   const demo = useDemo();
   const ticket = (demo.tickets[demo.workspaceId] ?? []).find((item) => item.id === id);
   const [body, setBody] = useState("");
-  usePageContext({ section: "request", title: ticket?.subject ?? "Request", subject: ticket?.id, hints: ["New request"] });
-  if (!ticket) return <p className="text-sm">None</p>;
+  const selfId = repo.workspace(demo.workspaceId).staffId;
+  const blocked = demo.tier === "essentials" && ticket?.requesterId !== selfId;
+  usePageContext({ section: "request", title: ticket && !blocked ? ticket.subject : "Request", subject: ticket?.id, hints: ["New request"] });
+  if (!ticket || blocked) return <p className="text-sm">None</p>;
   const messages = ticket.messages.filter((message) => demo.role === "leadership" || !message.internal);
 
   return (
