@@ -1,5 +1,6 @@
 "use client";
 
+import { changesThisMonth } from "@/lib/support/changes";
 import { getSupportRepository } from "@/lib/support/data";
 import { formatDay, money } from "@/lib/support/format";
 import { averageResponseHours } from "@/lib/support/stats";
@@ -112,17 +113,12 @@ export default function ReportView() {
         </section>
       </div>
       <section className={cardClass}>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Projects</h2>
-        <ul className="mt-3 space-y-3">
-          {executive.projects.map((project) => (
-            <li key={project.id}>
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-semibold">{project.name}</span>
-                <span className="shrink-0 tabular-nums text-ink/60">{project.progress}%</span>
-              </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#d5dde6]">
-                <div className="h-full rounded-full bg-pine" style={{ width: `${project.progress}%` }} />
-              </div>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Changes this month</h2>
+        <ul className="mt-3 space-y-2">
+          {changesThisMonth(demo.workspaceId).map((change) => (
+            <li key={change.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+              <span className="font-semibold">{change.title}</span>
+              <span className="text-ink/55">{formatDay(change.at)} · {change.by} · {change.category}</span>
             </li>
           ))}
         </ul>

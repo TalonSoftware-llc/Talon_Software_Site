@@ -22,7 +22,7 @@ function label(status: string): string {
 
 export function RequestList() {
   const demo = useDemo();
-  const { href, contactHref } = useFrame();
+  const { href } = useFrame();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("All");
   const essentials = demo.tier === "essentials";
@@ -68,13 +68,6 @@ export function RequestList() {
           </ul>
         ) : <p className="px-4 py-6 text-sm">None</p>}
       </div>
-      {essentials ? (
-        <section className="rounded-xl border border-[#d5e6e1] bg-[#f4faf7] p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-pine">Pro</p>
-          <p className="mt-2 text-lg font-semibold">Website, people, projects, spending, and the monthly review.</p>
-          <a href={contactHref} className={`${primaryClass} mt-4`}>Talk to Talon about Pro</a>
-        </section>
-      ) : null}
     </div>
   );
 }

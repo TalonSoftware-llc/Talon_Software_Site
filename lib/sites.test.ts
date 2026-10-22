@@ -179,6 +179,7 @@ assert.deepEqual(sitemapUrls("talon.support", main), [
   "https://talon.support/app/projects",
   "https://talon.support/app/spending",
   "https://talon.support/app/report",
+  "https://talon.support/app/pro",
   "https://talon.support/app/support",
   "https://talon.support/app/settings",
   "https://talon.support/website",

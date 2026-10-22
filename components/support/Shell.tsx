@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { ClipboardList, FolderKanban, Home, Inbox, KeyRound, LifeBuoy, Monitor, Settings, Users, Wallet, type LucideIcon } from "lucide-react";
+import { ClipboardList, FolderKanban, Home, Inbox, KeyRound, LayoutGrid, LifeBuoy, Monitor, Settings, Users, Wallet, type LucideIcon } from "lucide-react";
 import { getSupportRepository } from "@/lib/support/data";
 import AssistantPanel from "./AssistantPanel";
 import { FrameProvider, useFrame } from "./frame";
@@ -22,7 +22,8 @@ const proNav: { href: string; label: string; icon: LucideIcon }[] = [
 ];
 
 const essentialsNav: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/app/requests", label: "My requests", icon: Inbox },
+  { href: "/app/requests", label: "Requests", icon: Inbox },
+  { href: "/app/pro", label: "Pro", icon: LayoutGrid },
 ];
 
 const staffNav: { href: string; label: string; icon: LucideIcon }[] = [
@@ -91,7 +92,7 @@ function Chrome({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!demo.hydrated) return;
     if (demo.tier === "essentials") {
-      const allowed = path === "/app/requests" || path.startsWith("/app/requests/");
+      const allowed = path === "/app/pro" || path === "/app/requests" || path.startsWith("/app/requests/");
       if (!allowed) router.replace(href("/app/requests"));
       return;
     }
