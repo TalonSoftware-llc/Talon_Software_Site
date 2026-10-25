@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, type ReactNode } from "react";
 import { getSupportRepository } from "@/lib/support/data";
+import { formatDay } from "@/lib/support/format";
 import { licenseCatalog, offboardSteps, onboardTemplates } from "@/lib/support/identity";
 import type { Department, Person, PersonStatus } from "@/lib/support/types";
 import { StepUp } from "../StepUp";
@@ -11,7 +12,7 @@ import { usePageContext } from "../page-context";
 import { freezePerson, offboardPerson, onboardPerson, updatePerson } from "../store";
 import { useFrame } from "../frame";
 import { useDemo } from "../use-demo";
-import { Avatar, Badge, dangerClass, fieldClass, primaryClass, quietClass, statusTone } from "../ui";
+import { Avatar, Badge, cardClass, dangerClass, fieldClass, primaryClass, quietClass, statusTone } from "../ui";
 
 const repo = getSupportRepository(null);
 const departments: Department[] = ["Leadership", "Field", "Office", "Operations", "Finance"];
@@ -20,6 +21,58 @@ function displayStatus(person: Person): PersonStatus | "Frozen" {
   if (person.status === "Offboarding") return "Offboarding";
   if (person.frozen) return "Frozen";
   return person.status;
+}
+
+function uniqueGroups(groups: string[]): string[] {
+  return groups.filter((group, index) => groups.indexOf(group) === index);
+}
+
+function RecordItem({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="border-t border-[#f3f5f7] py-3 first:border-t-0">
+      <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-ink/45">{label}</dt>
+      <dd className="mt-1 text-sm">{children}</dd>
+    </div>
+  );
+}
+
+function EmployeeRecord({ person, manager }: { person: Person; manager: string }) {
+  const groups = uniqueGroups(person.groups);
+  return (
+    <section className={cardClass}>
+      <dl>
+        <RecordItem label="Department">{person.department}</RecordItem>
+        <RecordItem label="Manager">{manager}</RecordItem>
+        <RecordItem label="Start date">{formatDay(person.startDate)}</RecordItem>
+        <RecordItem label="Devices">
+          {person.devices.length === 0 ? "None" : (
+            <ul className="space-y-2">
+              {person.devices.map((device) => (
+                <li key={device.id} className="flex flex-wrap items-center gap-2">
+                  <span>{device.name}</span>
+                  <Badge tone={statusTone(device.threatdown)}>{device.threatdown}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </RecordItem>
+        <RecordItem label="Licenses">
+          {person.licenses.length === 0 ? "None" : (
+            <ul className="space-y-1">
+              {person.licenses.map((license) => <li key={license.name}>{license.name}</li>)}
+            </ul>
+          )}
+        </RecordItem>
+        <RecordItem label="Access">
+          <ul className="space-y-2">
+            {groups.length === 0 ? <li>No groups</li> : groups.map((group) => <li key={group}>{group}</li>)}
+            <li><Badge tone={person.mfa ? "ok" : "warn"}>{person.mfa ? "MFA on" : "MFA off"}</Badge></li>
+            <li><Badge tone={person.accountEnabled ? "ok" : "bad"}>{person.accountEnabled ? "Sign-in on" : "Sign-in blocked"}</Badge></li>
+          </ul>
+        </RecordItem>
+      </dl>
+    </section>
+  );
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
@@ -237,11 +290,11 @@ export function PersonProfile({ id }: { id: string }) {
   const [role, setRole] = useState(person?.role ?? "");
   const [department, setDepartment] = useState<Department>(person?.department ?? "Office");
   const [managerId, setManagerId] = useState(person?.managerId ?? "");
-  const [details, setDetails] = useState(false);
   const [note, setNote] = useState("");
   usePageContext({ section: "person", title: person?.name ?? "Person", subject: person?.name, hints: ["Edit user"] });
   if (!person || demo.role !== "leadership") return null;
   const status = displayStatus(person);
+  const manager = person.managerId ? roster.find((item) => item.id === person.managerId)?.name ?? "None" : "None";
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
@@ -282,15 +335,7 @@ export function PersonProfile({ id }: { id: string }) {
           setMode("view");
         }} />
       ) : null}
-      <button type="button" className={quietClass} onClick={() => setDetails((value) => !value)}>Details</button>
-      {details ? (
-        <ul className="space-y-1 text-sm">
-          {person.devices.map((device) => (
-            <li key={device.id}>{device.name} · {device.threatdown === "Protected" ? "Protected" : "Needs attention"}</li>
-          ))}
-          <li>{person.mfa ? "Code on" : "Code off"}</li>
-        </ul>
-      ) : null}
+      <EmployeeRecord person={person} manager={manager} />
     </div>
   );
 }
