@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
+import { getRequestSite } from "@/lib/request-site";
+import { shareMetadata } from "@/lib/share-cards";
 import { getSupportPrincipal } from "@/lib/support/session";
+import { absoluteUrl } from "@/lib/sites";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getRequestSite();
+  return shareMetadata(site.area, absoluteUrl(site.area, site.publicPath || "/"), site.linkMode);
+}
 
 /**
  * Authentication seam for Talon Support.
