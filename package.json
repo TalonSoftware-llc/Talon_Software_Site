@@ -6,10 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prototype:vercel:test": "node --import tsx --test prototype/vercel/test/pathway.test.ts",
+    "prototype:vercel:oidc": "tsx prototype/vercel/oidc-dev-server.ts",
+    "prototype:vercel:proof": "tsx prototype/vercel/proof.ts"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@neondatabase/serverless": "^1.2.0",
     "@sendgrid/mail": "^8.1.6",
+    "jose": "^6.2.13",
     "lucide-react": "^1.61.0",
     "next": "^16.2.4",
     "react": "^19.2.5",
@@ -23,8 +29,10 @@
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.2.4",
+    "oidc-provider": "^9.13.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
