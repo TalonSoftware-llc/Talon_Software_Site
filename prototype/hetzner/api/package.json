@@ -1,0 +1,9 @@
+{
+  "name": "talon-hetzner-prototype-api",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "jose": "^6.1.0",
+    "pg": "^8.16.3"
+  }
+}
