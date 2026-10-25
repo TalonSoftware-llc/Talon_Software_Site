@@ -26,20 +26,33 @@ export function RequestList() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof statuses)[number]>("All");
   const essentials = demo.tier === "essentials";
-  const requester = repo.workspace(demo.workspaceId)[essentials || demo.role === "staff" ? "staffId" : "leaderId"];
+  const ownView = essentials || demo.role === "staff";
+  const requester = repo.workspace(demo.workspaceId).staffId;
   const person = (demo.people[demo.workspaceId] ?? []).find((item) => item.id === requester);
-  const tickets = (demo.tickets[demo.workspaceId] ?? []).filter((ticket) => {
-    if ((essentials || demo.role === "staff") && ticket.requesterId !== requester) return false;
-    if (status !== "All" && ticket.status !== status) return false;
-    return `${ticket.id} ${ticket.subject}`.toLowerCase().includes(query.toLowerCase());
-  });
-  usePageContext({ section: "requests", title: essentials || demo.role === "staff" ? "My requests" : "Requests", hints: ["New request", "What is open?"] });
+  const tickets = ownView
+    ? (demo.tickets[demo.workspaceId] ?? []).filter((ticket) => {
+        if (ticket.requesterId !== requester) return false;
+        if (status !== "All" && ticket.status !== status) return false;
+        return `${ticket.id} ${ticket.subject}`.toLowerCase().includes(query.toLowerCase());
+      })
+    : [];
+  usePageContext({ section: "requests", title: ownView ? "My requests" : "Ask Talon", hints: ownView ? ["New request", "What is open?"] : ["New request"] });
+
+  if (!ownView) {
+    return (
+      <div className="mx-auto max-w-xl space-y-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Ask Talon</h1>
+        <p className="text-sm text-ink/60">Send a request. Talon handles it.</p>
+        <Link href={href("/app/requests/new")} className={primaryClass}>New request</Link>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-4 ${essentials ? "mx-auto max-w-3xl" : ""}`}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{essentials || demo.role === "staff" ? "My requests" : "Requests"}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My requests</h1>
           {essentials && person ? <p className="mt-1 text-sm text-ink/60">{person.name}</p> : null}
         </div>
         <Link href={href("/app/requests/new")} className={primaryClass}>New request</Link>
@@ -80,7 +93,8 @@ export function RequestDetail({ id }: { id: string }) {
   const blocked = demo.tier === "essentials" && ticket?.requesterId !== selfId;
   usePageContext({ section: "request", title: ticket && !blocked ? ticket.subject : "Request", subject: ticket?.id, hints: ["New request"] });
   if (!ticket || blocked) return <p className="text-sm">None</p>;
-  const messages = ticket.messages.filter((message) => demo.role === "leadership" || !message.internal);
+  const owner = demo.tier !== "essentials" && demo.role === "leadership";
+  const messages = ticket.messages.filter((message) => !message.internal || (!owner && demo.role === "leadership"));
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -88,6 +102,7 @@ export function RequestDetail({ id }: { id: string }) {
         <h1 className="text-2xl font-semibold tracking-tight">{ticket.subject}</h1>
         <Badge tone={statusTone(ticket.status)}>{label(ticket.status)}</Badge>
       </div>
+      {owner ? <p className="text-sm text-ink/60">Talon handles this request.</p> : null}
       <p className="text-xs text-ink/50">{ticket.id} · {formatDay(ticket.updated)}</p>
       <ul className="space-y-2">
         {messages.map((message) => (
@@ -114,6 +129,7 @@ export function NewRequest() {
   const [subject, setSubject] = useState(demo.draft?.subject ?? "");
   const [detail, setDetail] = useState(demo.draft?.detail ?? "");
   const [category, setCategory] = useState<TicketCategory>(demo.draft?.category ?? "Access");
+  const owner = demo.tier !== "essentials" && demo.role === "leadership";
   usePageContext({ section: "requests", title: "New request", hints: ["New request"] });
 
   function submit(event: FormEvent) {
@@ -126,6 +142,7 @@ export function NewRequest() {
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">New request</h1>
+      {owner ? <p className="text-sm text-ink/60">Talon handles this request.</p> : null}
       <form onSubmit={submit} className="space-y-3">
         <label className="block text-sm font-semibold">Subject<input className={fieldClass + " mt-1"} value={subject} onChange={(event) => setSubject(event.target.value)} required minLength={3} /></label>
         <label className="block text-sm font-semibold">Type

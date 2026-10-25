@@ -15,7 +15,6 @@ const repo = getSupportRepository(null);
 const proNav: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/app", label: "Home", icon: Home },
   { href: "/app/people", label: "People", icon: Users },
-  { href: "/app/requests", label: "Requests", icon: Inbox },
   { href: "/app/projects", label: "Projects", icon: FolderKanban },
   { href: "/app/spending", label: "Spending", icon: Wallet },
   { href: "/app/report", label: "Report", icon: ClipboardList },
@@ -135,7 +134,10 @@ function Chrome({ children }: { children: ReactNode }) {
           </nav>
           <div className="space-y-2 border-t border-white/10 px-3 py-3 text-xs text-white/60">
             {pro && demo.role === "leadership" ? (
-              <Link href={href("/app/settings")} className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${active(path, "/app/settings") ? "bg-white/10 text-white" : "hover:text-white"}`}><Settings className="h-4 w-4" aria-hidden="true" />Settings</Link>
+              <>
+                <Link href={href("/app/requests/new")} className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${active(path, "/app/requests/new") ? "bg-white/10 text-white" : "text-white/80 hover:text-white"}`}><LifeBuoy className="h-4 w-4" aria-hidden="true" />Ask Talon</Link>
+                <Link href={href("/app/settings")} className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${active(path, "/app/settings") ? "bg-white/10 text-white" : "hover:text-white"}`}><Settings className="h-4 w-4" aria-hidden="true" />Settings</Link>
+              </>
             ) : null}
             <a href={contactHref} className="block px-2 text-white/80 underline">Contact</a>
           </div>
@@ -201,7 +203,12 @@ function Chrome({ children }: { children: ReactNode }) {
             <p className="font-wordmark text-2xl">Talon</p>
             <div className="mt-4 space-y-1">
               {nav.map((item) => <Link key={item.href} href={href(item.href)} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"><item.icon className="h-4 w-4" aria-hidden="true" />{item.label}</Link>)}
-              {pro && demo.role === "leadership" ? <Link href={href("/app/settings")} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"><Settings className="h-4 w-4" aria-hidden="true" />Settings</Link> : null}
+              {pro && demo.role === "leadership" ? (
+                <>
+                  <Link href={href("/app/requests/new")} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"><LifeBuoy className="h-4 w-4" aria-hidden="true" />Ask Talon</Link>
+                  <Link href={href("/app/settings")} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm"><Settings className="h-4 w-4" aria-hidden="true" />Settings</Link>
+                </>
+              ) : null}
             </div>
             <div className="mt-4"><TierSwitch tier={demo.tier} onPick={pickTier} light /></div>
             {pro ? (
@@ -254,7 +261,7 @@ function searchHits(workspaceId: string, tickets: { id: string; subject: string;
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
   const selfId = repo.workspace(workspaceId).staffId;
-  const pool = tier === "essentials" ? tickets.filter((ticket) => ticket.requesterId === selfId) : tickets;
+  const pool = tier === "essentials" ? tickets.filter((ticket) => ticket.requesterId === selfId) : role === "leadership" ? [] : tickets;
   const found = tier === "essentials" ? [] : repo.search(workspaceId, q);
   const people = found.filter((hit) => hit.kind === "Person").slice(0, 4);
   const projects = tier === "pro" && role === "leadership" ? found.filter((hit) => hit.href.startsWith("/app/projects")).slice(0, 3) : [];
