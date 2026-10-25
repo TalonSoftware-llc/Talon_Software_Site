@@ -1,0 +1,17 @@
+{
+  "name": "talon-hybrid-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --env-file=.env.example proofs/run.mjs",
+    "dev": "node --env-file=.env.example scripts/dev.mjs",
+    "oidc": "node --env-file=.env.example oidc/server.mjs",
+    "data-plane": "node --env-file=.env.example data-plane/server.mjs",
+    "code": "node --env-file=.env.example oidc/print-code.mjs"
+  },
+  "dependencies": {
+    "jose": "^6.1.3",
+    "oidc-provider": "^9.5.2",
+    "pg": "^8.16.3"
+  }
+}

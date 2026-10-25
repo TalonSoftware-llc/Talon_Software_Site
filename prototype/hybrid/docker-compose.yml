@@ -1,0 +1,22 @@
+# Local stand-in for Postgres on the existing Hetzner box.
+# Published on loopback only. This compose file does not talk to Hetzner,
+# Tailscale, Backblaze, or the live Vercel project.
+
+name: talon-hybrid-prototype
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev-only-postgres
+      POSTGRES_DB: hybrid
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hybrid"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

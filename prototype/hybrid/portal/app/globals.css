@@ -1,0 +1,72 @@
+:root {
+  color: #14202b;
+  background: #f7f8fa;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #0b4f8a;
+}
+
+.banner {
+  background: #14202b;
+  color: #fff;
+  padding: 0.8rem 1.25rem;
+}
+
+.banner a {
+  color: #fff;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+label {
+  display: block;
+  font-weight: 650;
+  margin-top: 0.85rem;
+}
+
+input, textarea, select {
+  width: min(100%, 32rem);
+  box-sizing: border-box;
+  padding: 0.45rem;
+}
+
+button, .button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 0.8rem;
+  background: #14202b;
+  color: #fff;
+  text-decoration: none;
+  border: 0;
+  border-radius: 4px;
+}
+
+:focus-visible {
+  outline: 2px solid #0b6bcb;
+  outline-offset: 2px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.4rem;
+  border-bottom: 1px solid #d5dbe3;
+}
+
+.error {
+  color: #8a1f11;
+}
