@@ -71,31 +71,35 @@ export function SupportHomeCard() {
   const { href } = useFrame();
   const figures = useSupportFigures();
   return (
-    <Link href={href("/app/support")} className={`${cardClass} block h-full`}>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Support</h2>
-      <div className="mt-3 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-3xl font-semibold tabular-nums">{figures.openRequests}</p>
-          <p className="text-sm text-ink/60">Open</p>
+    <section className={`${cardClass} h-full`}>
+      <Link href={href("/app/support")} className="block">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Support</h2>
+        <div className="mt-3 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-3xl font-semibold tabular-nums">{figures.openRequests}</p>
+            <p className="text-sm text-ink/60">Open</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-semibold tabular-nums">{figures.hours === null ? "—" : `${figures.hours}h`}</p>
+            <p className="text-sm text-ink/60">Response</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-3xl font-semibold tabular-nums">{figures.hours === null ? "—" : `${figures.hours}h`}</p>
-          <p className="text-sm text-ink/60">Response</p>
+        <div className="mt-4">
+          <Bars points={figures.weeks.map((point) => ({ label: point.label, value: point.opened }))} />
         </div>
-      </div>
-      <div className="mt-4">
-        <Bars points={figures.weeks.map((point) => ({ label: point.label, value: point.opened }))} />
-      </div>
+      </Link>
       <h3 className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">This week</h3>
       <ul className="mt-2 divide-y divide-[#eef2f5]">
         {figures.week.map((item) => (
-          <li key={item.person.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-            <span className="flex items-center gap-2 font-semibold"><Avatar name={item.person.name} size="sm" />{item.person.name}</span>
-            <span className="tabular-nums">{num(item.count)}</span>
+          <li key={item.person.id}>
+            <Link href={href(`/app/people/${item.person.id}`)} className="flex items-center justify-between gap-3 py-2 text-sm hover:text-pine">
+              <span className="flex items-center gap-2 font-semibold"><Avatar name={item.person.name} size="sm" />{item.person.name}</span>
+              <span className="tabular-nums">{num(item.count)}</span>
+            </Link>
           </li>
         ))}
       </ul>
-    </Link>
+    </section>
   );
 }
 
