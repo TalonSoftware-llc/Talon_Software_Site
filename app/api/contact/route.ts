@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get recipient email from environment or use a default
-    const toEmail = process.env.CONTACT_EMAIL || "contact@talonsoftware.com";
+    const toEmail = process.env.CONTACT_EMAIL || "contact@talonsoftware.dev";
 
     // Prepare email
     const escape = (value: string) =>
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     const msg = {
       to: toEmail,
-      from: process.env.SENDGRID_FROM_EMAIL || "noreply@talonsoftware.com",
+      from: process.env.SENDGRID_FROM_EMAIL || "noreply@talonsoftware.dev",
       replyTo: email,
       subject: `Discovery request from ${name} (${company})`,
       text,

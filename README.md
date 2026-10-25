@@ -30,8 +30,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 SENDGRID_API_KEY=your_sendgrid_api_key_here
-SENDGRID_FROM_EMAIL=noreply@talonsoftware.com
-CONTACT_EMAIL=contact@talonsoftware.com
+SENDGRID_FROM_EMAIL=noreply@talonsoftware.dev
+CONTACT_EMAIL=contact@talonsoftware.dev
 ```
 
 **Getting your SendGrid API Key:**
