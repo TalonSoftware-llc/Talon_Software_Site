@@ -42,10 +42,6 @@ export default function ReportView() {
   const tickets = demo.tickets[demo.workspaceId] ?? [];
   const open = tickets.filter((ticket) => ticket.status !== "Resolved").length;
   const hours = averageResponseHours(tickets);
-  const points = executive.series;
-  const latest = points[points.length - 1];
-  const prior = points[points.length - 2];
-  const delta = (latest?.spend ?? 0) - (prior?.spend ?? 0);
   const weeks = repo.executive(demo.workspaceId, "30d").series;
   const maxOpened = Math.max(...weeks.map((point) => point.opened), 1);
   const renewals = [...executive.renewals].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
@@ -92,13 +88,6 @@ export default function ReportView() {
               </div>
             ))}
           </div>
-        </section>
-        <section className={cardClass}>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Spending</h2>
-          <p className="mt-3 text-3xl font-semibold tabular-nums">{money(latest?.spend ?? executive.monthSpend)}</p>
-          <p className={`mt-1 text-sm font-semibold tabular-nums ${delta > 0 ? "text-[#7a3030]" : "text-[#1f4d45]"}`}>
-            {delta > 0 ? "+" : "−"}{money(Math.abs(delta))} vs last month
-          </p>
         </section>
         <section className={cardClass}>
           <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Renewals</h2>
