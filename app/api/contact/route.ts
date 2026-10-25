@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import sgMail from "@sendgrid/mail";
 
+const PUBLIC_CONTACT_EMAIL = "contact@talonsoftware.dev";
+
 // Only log warning in development, not in production
 if (!process.env.SENDGRID_API_KEY && process.env.NODE_ENV !== "production") {
   console.warn("SENDGRID_API_KEY is not set");
@@ -12,8 +14,29 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 export async function POST(request: NextRequest) {
+  let body: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    message?: string;
+    company?: string;
+    role?: string;
+    headcount?: string;
+    interest?: string;
+    trigger?: string;
+    heardFrom?: string;
+  };
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  try {
     const {
       name,
       email,
@@ -63,20 +86,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if SendGrid is configured
+    // Recipient shown in the mailto fallback. Same address the route already used.
+    const toEmail = process.env.CONTACT_EMAIL || PUBLIC_CONTACT_EMAIL;
+
+    // Check if SendGrid is configured. Do not report success when nothing was sent.
     if (!process.env.SENDGRID_API_KEY) {
       // Don't log in production to avoid exposing configuration state
       if (process.env.NODE_ENV !== "production") {
         console.error("SENDGRID_API_KEY is not configured");
       }
-      return NextResponse.json(
-        { error: "Email service is not configured" },
-        { status: 500 }
-      );
+      return mailNotSent(toEmail);
     }
-
-    // Get recipient email from environment or use a default
-    const toEmail = process.env.CONTACT_EMAIL || "contact@talonsoftware.dev";
 
     // Prepare email
     const escape = (value: string) =>
@@ -124,8 +144,14 @@ export async function POST(request: NextRequest) {
       html,
     };
 
-    // Send email via SendGrid
-    await sgMail.send(msg);
+    try {
+      await sgMail.send(msg);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Error sending email:", errorMessage);
+      return mailNotSent(toEmail);
+    }
 
     return NextResponse.json(
       { message: "Email sent successfully" },
@@ -135,59 +161,16 @@ export async function POST(request: NextRequest) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     console.error("Error sending email:", errorMessage);
-
-    if (!error || typeof error !== "object" || !("response" in error)) {
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
-      );
-    }
-
-    const { response } = error as {
-      response?: { body?: { errors?: Array<{ message?: string }> } };
-    };
-
-    if (!response) {
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
-      );
-    }
-
-    const errorBody = response.body;
-
-    if (errorBody?.errors) {
-      const firstError = errorBody.errors[0];
-      const errorMsg = firstError?.message || "";
-
-      if (errorMsg.includes("domain") || errorMsg.includes("authenticated")) {
-        return NextResponse.json(
-          {
-            error:
-              "Domain authentication issue. Please ensure your sender email is from a verified domain in SendGrid.",
-          },
-          { status: 500 }
-        );
-      }
-
-      const safeErrorMessage =
-        errorMsg.includes("API") || errorMsg.includes("key")
-          ? "Failed to send email. Please check your SendGrid configuration."
-          : errorMsg;
-
-      return NextResponse.json(
-        {
-          error:
-            safeErrorMessage ||
-            "Failed to send email. Please check your SendGrid configuration.",
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to send email. Please check your SendGrid configuration." },
-      { status: 500 }
-    );
+    return mailNotSent(process.env.CONTACT_EMAIL || PUBLIC_CONTACT_EMAIL);
   }
+}
+
+function mailNotSent(contactEmail: string) {
+  return NextResponse.json(
+    {
+      error: "We could not send your message from the site.",
+      contactEmail,
+    },
+    { status: 503 }
+  );
 }
