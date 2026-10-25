@@ -112,6 +112,33 @@ function Strip({ days, up }: { days: number; up: boolean }) {
   );
 }
 
+function productLine(name: string, product: string): string | null {
+  if (name === product) return null;
+  if (name.replace(/s$/i, "") === product.replace(/s$/i, "")) return null;
+  return product;
+}
+
+function markedDays(days: number, incidents: { at: string }[], live: boolean): boolean[] {
+  const marks = Array.from({ length: days }, () => false);
+  const end = DEMO_NOW.getTime();
+  for (const incident of incidents) {
+    const age = Math.floor((end - new Date(incident.at).getTime()) / 86_400_000);
+    if (age >= 0 && age < days) marks[days - 1 - age] = true;
+  }
+  if (live) marks[days - 1] = true;
+  return marks;
+}
+
+function History({ marks }: { marks: boolean[] }) {
+  return (
+    <div className="flex gap-px" aria-hidden="true">
+      {marks.map((mark, index) => (
+        <span key={index} className={`h-6 min-w-0 flex-1 rounded-[1px] ${mark ? "bg-[#c4a574]" : "bg-[#1f4d45]"}`} />
+      ))}
+    </div>
+  );
+}
+
 export function useGlance() {
   const demo = useDemo();
   const executive = repo.executive(demo.workspaceId, "30d");
@@ -138,8 +165,11 @@ export function useGlance() {
     .map((service) => ({
       id: service.id,
       name: labelFor(service),
+      product: service.name,
       state: pill(service.status),
       uptime: service.uptime30,
+      uptime90: service.uptime90,
+      responseMs: service.responseMs,
       incidents: service.incidents,
     }));
   const websiteIncidents = (website?.incidents ?? []).map((incident) => ({
@@ -148,14 +178,6 @@ export function useGlance() {
     minutes: incident.minutes,
     affected: "Website",
   }));
-  const systemIncidents = systems.flatMap((system) =>
-    system.incidents.map((incident) => ({
-      id: `${system.id}-${incident.at}`,
-      at: incident.at,
-      minutes: incident.minutes,
-      affected: system.name,
-    })),
-  );
   const outages = repo.outages(demo.workspaceId)
     .filter((outage) => outage.kind === "internet")
     .map((outage) => ({ id: outage.id, at: outage.at, location: outage.title, minutes: outageMinutes[outage.id] ?? 0 }));
@@ -168,7 +190,6 @@ export function useGlance() {
     live,
     systems,
     websiteIncidents,
-    systemIncidents,
     certs,
     pages: executive.traffic.pages,
     load: website?.responseMs ?? 0,
@@ -378,33 +399,89 @@ export function SystemsView() {
   const glance = useGlance();
   usePageContext({ section: "systems", title: "Systems", hints: ["Is Procore up?", "Is email up?"] });
   if (demo.role !== "leadership") return null;
+  const attention = glance.systems.filter((system) => system.state !== "Up");
+  const slowest = glance.systems.reduce<(typeof glance.systems)[number] | undefined>(
+    (best, system) => (!best || system.responseMs > best.responseMs ? system : best),
+    undefined,
+  );
+  const incidentCount = glance.systems.reduce((sum, system) => sum + system.incidents.length, 0);
+  const peak = Math.max(...glance.systems.map((system) => system.responseMs), 1);
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Systems</h1>
-      <section className={cardClass}>
-        <ul className="divide-y divide-[#eef2f5]">
-          {glance.systems.map((system) => (
-            <li key={system.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-              <span className="font-semibold">{system.name}</span>
-              <span className="tabular-nums">{system.uptime}%</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pillClass(system.state)}`}>{system.state}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className={cardClass}>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Incidents</h2>
-        <ul className="mt-3 divide-y divide-[#eef2f5]">
-          {glance.systemIncidents.length ? glance.systemIncidents.map((incident) => (
-            <li key={incident.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
-              <span>{formatDay(incident.at)}</span>
-              <span className="tabular-nums">{incident.minutes}m</span>
-              <span>{incident.affected}</span>
-            </li>
-          )) : <li className="py-2.5 text-sm">None</li>}
-        </ul>
-      </section>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <section className={cardClass}>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Systems</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{glance.systems.length}</p>
+        </section>
+        <section className={cardClass}>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Needs a look</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{attention.length}</p>
+          <p className="mt-1 text-sm text-ink/60">{attention.length ? attention.map((system) => system.name).join(", ") : "All up"}</p>
+        </section>
+        <section className={cardClass}>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Slowest</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{slowest ? slowest.responseMs : 0} ms</p>
+          <p className="mt-1 text-sm text-ink/60">{slowest?.name ?? "—"}</p>
+        </section>
+        <section className={cardClass}>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink/45">Incidents</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums">{incidentCount}</p>
+        </section>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {glance.systems.map((system) => {
+          const catalog = productLine(system.name, system.product);
+          const live = system.state !== "Up";
+          const incidents = [...system.incidents].sort((a, b) => b.at.localeCompare(a.at));
+          return (
+            <section key={system.id} className={cardClass}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold">{system.name}</h2>
+                  {catalog ? <p className="text-sm text-ink/60">{catalog}</p> : null}
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${pillClass(system.state)}`}>{system.state}</span>
+              </div>
+              <dl className="mt-4 grid grid-cols-3 gap-2 text-sm">
+                <div>
+                  <dt className="text-xs text-ink/50">30 days</dt>
+                  <dd className="font-semibold tabular-nums">{system.uptime}%</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-ink/50">90 days</dt>
+                  <dd className="font-semibold tabular-nums">{system.uptime90}%</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-ink/50">Response</dt>
+                  <dd className="font-semibold tabular-nums">{system.responseMs} ms</dd>
+                </div>
+              </dl>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#eef2f5]" aria-hidden="true">
+                <div className="h-full rounded-full" style={{ width: `${Math.max(8, (system.responseMs / peak) * 100)}%`, background: live ? "#c4a574" : "#1f4d45" }} />
+              </div>
+              <p className="mt-4 text-xs text-ink/50">30 days</p>
+              <div className="mt-1"><History marks={markedDays(30, system.incidents, live)} /></div>
+              <p className="mt-3 text-xs text-ink/50">90 days</p>
+              <div className="mt-1"><History marks={markedDays(90, system.incidents, live)} /></div>
+              {incidents.length ? (
+                <ul className="mt-3 divide-y divide-[#eef2f5]">
+                  {incidents.map((incident) => (
+                    <li key={`${system.id}-${incident.at}`} className="py-2.5 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span>{formatDay(incident.at)}</span>
+                        <span className="tabular-nums">{incident.minutes}m</span>
+                      </div>
+                      <p className="mt-1 text-ink/70">{incident.summary}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
