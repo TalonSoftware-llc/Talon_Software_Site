@@ -58,12 +58,17 @@ assert.deepEqual(route("preview.vercel.app", "/engineering"), {
   linkMode: "path",
   publicPath: "/",
 });
-assert.equal(redirect("preview.vercel.app", "/app"), "/support/app");
-assert.deepEqual(route("preview.vercel.app", "/support/app/tickets"), {
+assert.deepEqual(route("preview.vercel.app", "/support"), {
   kind: "passthrough",
-  area: "support",
+  area: "main",
   linkMode: "path",
-  publicPath: "/app/tickets",
+  publicPath: "/support",
+});
+assert.deepEqual(route("preview.vercel.app", "/app"), {
+  kind: "passthrough",
+  area: "main",
+  linkMode: "path",
+  publicPath: "/app",
 });
 
 assert.deepEqual(route("talon.consulting", "/"), {
@@ -115,29 +120,28 @@ assert.equal(redirect("talonsoftware.dev", "/consulting"), "https://talon.consul
 assert.equal(redirect("talonsoftware.dev", "/consulting/services"), "https://talon.consulting/services");
 assert.equal(redirect("www.talonsoftware.dev", "/about"), "https://talonsoftware.dev/about");
 
-assert.deepEqual(route("talon.engineering", "/"), {
+const engineeringPage = {
   kind: "rewrite",
   area: "engineering",
   linkMode: "domain",
   publicPath: "/",
   toPathname: "/engineering",
-});
-assert.equal(redirect("talon.engineering", "/plans"), "https://talonsoftware.dev/plans");
-assert.deepEqual(route("talon.support", "/"), {
-  kind: "rewrite",
-  area: "support",
+};
+assert.deepEqual(route("talon.engineering", "/"), engineeringPage);
+assert.deepEqual(route("talon.engineering", "/plans"), engineeringPage);
+assert.deepEqual(route("talon.engineering", "/consulting"), engineeringPage);
+assert.deepEqual(route("talon.engineering", "/engineering"), engineeringPage);
+assert.equal(redirect("www.talon.engineering", "/"), "https://talon.engineering/");
+assert.equal(redirect("www.talon.engineering", "/plans"), "https://talon.engineering/plans");
+assert.deepEqual(route("talon.support", "/"), { kind: "notfound" });
+assert.deepEqual(route("talon.support", "/app"), { kind: "notfound" });
+assert.deepEqual(route("www.talon.support", "/"), { kind: "notfound" });
+assert.deepEqual(route("talonsoftware.dev", "/support"), {
+  kind: "passthrough",
+  area: "main",
   linkMode: "domain",
-  publicPath: "/",
-  toPathname: "/support",
+  publicPath: "/support",
 });
-assert.deepEqual(route("talon.support", "/app"), {
-  kind: "rewrite",
-  area: "support",
-  linkMode: "domain",
-  publicPath: "/app",
-  toPathname: "/support/app",
-});
-assert.equal(redirect("talon.support", "/support/app/tickets"), "https://talon.support/app/tickets");
 assert.equal(redirect("www.talon.consulting", "/services"), "https://talon.consulting/services");
 
 assert.equal(route("talon.consulting", "/api/contact").kind, "passthrough");
@@ -164,30 +168,15 @@ assert.equal(
   "https://talon.consulting/contact"
 );
 assert.equal(hrefFor({ area: "consulting", linkMode: "domain" }, "main", "/contact", main), "https://talonsoftware.dev/contact");
-assert.equal(hrefFor({ area: "engineering", linkMode: "path" }, "support", "/app", main), "/support/app");
+assert.equal(hrefFor({ area: "main", linkMode: "domain" }, "engineering", "/", main), "https://talon.engineering");
 
 assert.deepEqual(robotsForHost("localhost", main), { index: false });
 assert.deepEqual(robotsForHost("talon.consulting", main), {
   index: true,
   sitemap: "https://talon.consulting/sitemap.xml",
 });
-assert.deepEqual(sitemapUrls("talon.support", main), [
-  "https://talon.support",
-  "https://talon.support/app",
-  "https://talon.support/app/people",
-  "https://talon.support/app/requests",
-  "https://talon.support/app/projects",
-  "https://talon.support/app/spending",
-  "https://talon.support/app/report",
-  "https://talon.support/app/pro",
-  "https://talon.support/app/support",
-  "https://talon.support/app/settings",
-  "https://talon.support/website",
-  "https://talon.support/network",
-  "https://talon.support/systems",
-  "https://talon.support/demo/pro",
-  "https://talon.support/demo/essentials",
-]);
+assert.deepEqual(sitemapUrls("talon.engineering", main), ["https://talon.engineering"]);
+assert.deepEqual(sitemapUrls("talon.support", main), []);
 assert.ok(sitemapUrls("talonsoftware.dev", main).includes("https://talonsoftware.dev/plans"));
 assert.ok(sitemapUrls("talonsoftware.dev", main).includes("https://talonsoftware.dev/contact"));
 assert.ok(!sitemapUrls("talon.consulting", main).some((url) => url.endsWith("/plans")));

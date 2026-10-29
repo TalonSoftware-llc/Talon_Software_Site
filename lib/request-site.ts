@@ -26,7 +26,7 @@ export const getRequestSite = cache(async (): Promise<RequestSite> => {
   }
 
   const decision = resolveHostRoute({ hostHeader, pathname: "/" });
-  if (decision.kind === "redirect") {
+  if (decision.kind === "redirect" || decision.kind === "notfound") {
     return { area: "main", linkMode: "path", publicPath: "/", hostname: normalizeHostname(hostHeader) };
   }
   return {

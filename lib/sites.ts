@@ -8,9 +8,10 @@
  * On a real area host, public URLs have no prefix: https://talon.consulting/services.
  * On localhost and *.vercel.app, the same page is /consulting/services.
  * The main site keeps its original paths (/plans, /contact, and the rest).
+ * talon.engineering serves only the coming-soon page. talon.support is a separate project.
  */
 
-export type AreaId = "main" | "consulting" | "engineering" | "support";
+export type AreaId = "main" | "consulting" | "engineering";
 export type LinkMode = "domain" | "path";
 
 export type AreaDef = {
@@ -25,10 +26,11 @@ export type AreaDef = {
 export type RouteDecision =
   | { kind: "passthrough"; area: AreaId; linkMode: LinkMode; publicPath: string }
   | { kind: "rewrite"; area: AreaId; linkMode: LinkMode; publicPath: string; toPathname: string }
-  | { kind: "redirect"; to: string };
+  | { kind: "redirect"; to: string }
+  | { kind: "notfound" };
 
-const AREA_IDS: readonly AreaId[] = ["main", "consulting", "engineering", "support"];
-const PREFIXED_AREAS: readonly AreaId[] = ["consulting", "engineering", "support"];
+const AREA_IDS: readonly AreaId[] = ["main", "consulting", "engineering"];
+const PREFIXED_AREAS: readonly AreaId[] = ["consulting", "engineering"];
 
 export const DEFAULT_MAIN_ORIGIN = "https://talonsoftware.dev";
 
@@ -85,12 +87,6 @@ export function areaCatalog(mainHostname = defaultMainHostname()): Record<AreaId
       host: "talon.engineering",
       prefix: "/engineering",
       paths: ["/"],
-    },
-    support: {
-      id: "support",
-      host: "talon.support",
-      prefix: "/support",
-      paths: ["/", "/app", "/app/people", "/app/requests", "/app/projects", "/app/spending", "/app/report", "/app/pro", "/app/support", "/app/settings", "/website", "/network", "/systems", "/demo/pro", "/demo/essentials"],
     },
   };
 }
@@ -154,6 +150,10 @@ export function resolveHostRoute(input: {
     return passthrough("main", "path", pathname);
   }
 
+  if (hostname === "talon.support") {
+    return { kind: "notfound" };
+  }
+
   if (www && knownHost(hostname, catalog)) {
     return { kind: "redirect", to: `https://${hostname}${pathname === "/" ? "/" : pathname}` };
   }
@@ -163,6 +163,10 @@ export function resolveHostRoute(input: {
 
   if (isSkippablePath(pathname)) {
     return passthrough(hostArea ?? "main", linkMode, pathname);
+  }
+
+  if (linkMode === "domain" && hostArea === "engineering") {
+    return serve("engineering", "/", "domain", catalog.engineering.prefix);
   }
 
   if (linkMode === "domain" && hostArea) {
