@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { hrefFor, resolveHostRoute } from "@/lib/sites";
+import { resolveHostRoute } from "@/lib/sites";
 
 export function proxy(request: NextRequest) {
   const hostHeader = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
@@ -9,17 +9,18 @@ export function proxy(request: NextRequest) {
     pathname: request.nextUrl.pathname,
   });
 
-  if (decision.kind === "redirect") {
-    const location = decision.to.startsWith("http") ? new URL(decision.to) : new URL(decision.to, request.url);
-    location.search = request.nextUrl.search;
-    return NextResponse.redirect(location, 308);
+  if (decision.kind === "notfound") {
+    return new NextResponse("Not found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "x-robots-tag": "noindex, nofollow",
+      },
+    });
   }
 
-  if (decision.publicPath === "/app/systems" || decision.publicPath.startsWith("/app/systems/")) {
-    const location = new URL(
-      hrefFor({ area: decision.area, linkMode: decision.linkMode }, "support", "/website"),
-      request.url,
-    );
+  if (decision.kind === "redirect") {
+    const location = decision.to.startsWith("http") ? new URL(decision.to) : new URL(decision.to, request.url);
     location.search = request.nextUrl.search;
     return NextResponse.redirect(location, 308);
   }

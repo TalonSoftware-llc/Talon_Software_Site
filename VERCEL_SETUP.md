@@ -37,9 +37,10 @@ Attach every domain to the same Vercel project. The app reads the `Host` header 
 | --- | --- | --- |
 | `talonsoftware.dev` | Main | The fractional CTO practice: home, plans, services, how we work, FAQ, contact, and the rest of the original site. Set `NEXT_PUBLIC_SITE_URL` to this origin. |
 | `talon.consulting` | Consulting | Project consulting: AI, systems, assessments, and integrations. Its own contact page posts to the same `/api/contact` route. |
-| `talon.engineering` | Engineering | A standalone coming-soon page. No shared site header. |
-| `talon.support` | Support | Talon Support sign-in and a demo app. Sign-in does not collect or store credentials. The demo has an Essentials tickets view and the full Pro portal. |
+| `talon.engineering` | Engineering | A standalone coming-soon page. Every path on this host, including `www.talon.engineering` after its redirect to the apex, shows that page and nothing from the main site. |
 | `talon.software` (later) | Main | Replace `talonsoftware.dev` by changing `NEXT_PUBLIC_SITE_URL` and attaching the domain. |
+
+`talon.support` belongs to its own portal project. Do not attach that domain here. A request that still arrives for `talon.support` or `www.talon.support` is a 404, not the marketing site and not a redirect.
 
 `www` on any of those hosts permanently redirects to the apex host.
 
@@ -47,12 +48,9 @@ Preview deployments (`*.vercel.app`) and local `next dev` have no custom host. U
 
 - `/` and the original pages (`/plans`, `/contact`, `/faq`, and the rest) on the main site
 - `/consulting`, `/consulting/services`, `/consulting/process`, `/consulting/contact`
-- `/engineering`
-- `/support` for sign-in, then `/support/app`. Pro sections: Home, People, Requests, Changes, Spending, Report, Website, Network, Systems, Settings. Essentials is requests, plus a Get Pro preview.
+- `/engineering` for the coming-soon page
 
-The support assistant in the demo is a permanent sidebar on desktop and a collapsed bottom pill on mobile. It is scripted in the browser. It does not call a model. Answers stay in the workspace, follow the selected view, and are not used for training.
-
-On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/services`, not `https://talonsoftware.dev/consulting/services`), so the same page is not indexed twice. `/plans` and `/contact` on `talonsoftware.dev` stay on that domain. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
+On the real domains those prefixes redirect to the apex URL for that area (`https://talon.consulting/services`, not `https://talonsoftware.dev/consulting/services`), so the same page is not indexed twice. `/plans` and `/contact` on `talonsoftware.dev` stay on that domain. A request to `talon.engineering` stays on the coming-soon page instead of redirecting into the main site. Each host publishes its own `/sitemap.xml` and `/robots.txt`. Preview hosts disallow indexing.
 
 ## How to Add Environment Variables in Vercel
 
