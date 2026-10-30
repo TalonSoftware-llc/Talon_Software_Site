@@ -30,8 +30,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 SENDGRID_API_KEY=your_sendgrid_api_key_here
-SENDGRID_FROM_EMAIL=noreply@talonsoftware.com
-CONTACT_EMAIL=contact@talonsoftware.com
+SENDGRID_FROM_EMAIL=noreply@talonsoftware.dev
+CONTACT_EMAIL=contact@talonsoftware.dev
 ```
 
 **Getting your SendGrid API Key:**
@@ -41,8 +41,9 @@ CONTACT_EMAIL=contact@talonsoftware.com
 4. Copy the API key to your `.env.local` file
 
 **Email Configuration:**
-- `SENDGRID_FROM_EMAIL`: The email address that will appear as the sender (must be verified in SendGrid)
-- `CONTACT_EMAIL`: The email address where contact form submissions will be sent
+- `SENDGRID_FROM_EMAIL`: The email address that will appear as the sender (must be verified in SendGrid). If unset, the route uses `noreply@talonsoftware.dev`.
+- `CONTACT_EMAIL`: The email address where contact form submissions will be sent. If unset, the route uses `contact@talonsoftware.dev`.
+- If `SENDGRID_API_KEY` is unset, or sending fails, the form does not say the message was sent. It shows a mailto link to that contact address.
 
 3. Run the development server:
 ```bash
