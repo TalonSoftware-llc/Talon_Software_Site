@@ -39,6 +39,7 @@ export default function PlansPage() {
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <article className="card">
           <h2 className="font-serif text-2xl font-medium text-ink">Essentials</h2>
+          <p className="mt-2 font-serif text-xl font-medium text-ink">Custom quote</p>
           <p className="mt-2 text-sm text-ink/70">
             For a company that wants the technology run: support, systems, vendors, budget, and
             baseline security. Monthly review. About ten hours a month of advisory time, tracked
@@ -52,6 +53,7 @@ export default function PlansPage() {
         </article>
         <article className="card">
           <h2 className="font-serif text-2xl font-medium text-ink">Pro</h2>
+          <p className="mt-2 font-serif text-xl font-medium text-ink">Custom quote</p>
           <p className="mt-2 text-sm text-ink/70">
             For a company that needs the decisions Essentials does not cover. Weekly presence and
             leadership meetings. Includes the Essentials work, and adds the items below. A
