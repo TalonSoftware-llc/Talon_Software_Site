@@ -50,7 +50,7 @@ export default function OfferPage() {
         <p className="mt-6 text-sm text-ink/80">
           Start with a 30-minute call:{" "}
           <Link href="/contact" className="underline">
-            talonsoftware.com/contact
+            talonsoftware.dev/contact
           </Link>
         </p>
       </article>

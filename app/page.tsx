@@ -8,6 +8,14 @@ export const metadata: Metadata = {
     "Fractional CTO services for your business. Talon Software is based in Vancouver, WA.",
 };
 
+const proServices = [
+  "Security program leadership and incident response",
+  "Cyber insurance, customer questionnaires, and audit readiness",
+  "Software selection, delivery oversight, and hiring",
+  "AI and automation decisions",
+  "A seat in leadership meetings",
+];
+
 export default function Home() {
   return (
     <SiteFrame>
@@ -60,55 +68,34 @@ export default function Home() {
       </section>
 
       <section className="mt-20">
-        <p className="eyebrow">Retainers</p>
+        <p className="eyebrow">The work</p>
         <h2 className="mt-3 font-serif text-3xl font-medium text-ink">
-          Two monthly plans, quoted to the organization
+          The decisions above day-to-day technology
         </h2>
         <p className="mt-4 max-w-3xl text-lg leading-relaxed text-ink/75">
-          There is no published rate card. Price follows headcount, locations, the condition of the
-          current environment, compliance obligations, and the level of leadership involvement
-          required. Essentials runs the technology. Pro is for the decisions that sit above that
-          work.
+          Security leadership, questionnaires, software oversight, AI, and a seat in leadership
+          meetings. Monthly plans are on their own page.
         </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <article className="card">
-            <h3 className="font-serif text-2xl font-medium text-ink">Essentials</h3>
-            <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed text-ink/75">
-              <li>Help desk, devices, accounts, and onboarding</li>
-              <li>Email, files, identity, and the other software already in use</li>
-              <li>Cloud, network, and the connections between systems</li>
-              <li>Licenses, renewals, vendors, and the technology budget</li>
-              <li>Baseline security: MFA, backups, endpoint protection, and access</li>
-              <li>A monthly review of what is in place, what it costs, and what needs a decision</li>
-            </ul>
-            <Link href="/plans" className="mt-4 inline-block text-sm font-semibold text-pine underline">
-              Essentials scope
-            </Link>
-          </article>
-          <article className="card">
-            <h3 className="font-serif text-2xl font-medium text-ink">Pro</h3>
-            <p className="mt-3 leading-relaxed text-ink/75">
-              The decisions Essentials does not cover. Includes the Essentials work, and adds:
-            </p>
-            <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed text-ink/75">
-              <li>Security program leadership and incident response</li>
-              <li>Cyber insurance, customer questionnaires, and audit readiness</li>
-              <li>Software selection, delivery oversight, and hiring</li>
-              <li>AI and automation decisions</li>
-              <li>A seat in leadership meetings</li>
-            </ul>
-            <Link href="/plans" className="mt-4 inline-block text-sm font-semibold text-pine underline">
-              Pro scope
-            </Link>
-          </article>
-        </div>
+        <ul className="mt-8 grid gap-4 md:grid-cols-2">
+          {proServices.map((service, index) => (
+            <li
+              key={service}
+              className={index === proServices.length - 1 ? "card md:col-span-2" : "card"}
+            >
+              <h3 className="font-serif text-xl font-medium leading-snug text-ink">{service}</h3>
+            </li>
+          ))}
+        </ul>
+        <Link href="/plans" className="mt-4 inline-block text-sm font-semibold text-pine underline">
+          Monthly plans
+        </Link>
         <article className="card mt-4">
           <h3 className="font-serif text-2xl font-medium text-ink">Fixed assessments</h3>
           <p className="mt-3 max-w-3xl leading-relaxed text-ink/75">
             A technology, business, or network security assessment produces a written report and a
             readout to leadership. Where a retainer is appropriate, the proposal is the final
-            section of that readout. Assessments begin at $5,000. Half of the fee is credited to
-            the first retainer month when the agreement is signed within 30 days.
+            section of that readout. Half of the fee is credited to the first retainer month when
+            the agreement is signed within 30 days.
           </p>
           <Link href="/assessments" className="mt-4 inline-block text-sm font-semibold text-pine underline">
             Services

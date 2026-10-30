@@ -31,6 +31,30 @@ const emptyForm: FormData = {
 const fieldClass =
   "w-full rounded-md border border-[#e4ddd2] bg-paper px-3 py-2 text-ink shadow-sm focus:border-pine focus:outline-none focus:ring-1 focus:ring-pine";
 
+// Same address as the contact route fallback. Not a new mailbox.
+const PUBLIC_CONTACT_EMAIL = "contact@talonsoftware.dev";
+
+function isEmailAddress(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function mailtoFor(email: string, form: FormData): string {
+  const lines = [
+    `Name: ${form.name}`,
+    `Email: ${form.email}`,
+    `Phone: ${form.phone}`,
+    `Company: ${form.company}`,
+    `Role: ${form.role}`,
+    `Headcount: ${form.headcount}`,
+    `Interest: ${form.interest}`,
+    `What prompted this: ${form.trigger}`,
+    `Heard from: ${form.heardFrom}`,
+    "",
+    form.message,
+  ];
+  return `mailto:${email}?subject=${encodeURIComponent("Discovery request")}&body=${encodeURIComponent(lines.join("\n"))}`;
+}
+
 export default function ContactForm({ interest }: { interest?: string | null }) {
   const [formData, setFormData] = useState<FormData>({
     ...emptyForm,
@@ -40,6 +64,7 @@ export default function ContactForm({ interest }: { interest?: string | null }) 
   const [submitStatus, setSubmitStatus] = useState<{
     type: "success" | "error" | null;
     message: string;
+    contactEmail?: string;
   }>({ type: null, message: "" });
 
   const handleChange = (
@@ -60,24 +85,40 @@ export default function ContactForm({ interest }: { interest?: string | null }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      const data = await response.json();
+      let data: { error?: string; contactEmail?: string } = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
-      if (response.ok) {
+      if (response.ok && !data.error) {
         setSubmitStatus({
           type: "success",
           message: "Received. You will get a reply within one business day.",
         });
         setFormData({ ...emptyForm, interest: interest || "" });
-      } else {
+      } else if (response.status === 400) {
         setSubmitStatus({
           type: "error",
           message: data.error || "Something went wrong. Please try again.",
+        });
+      } else {
+        const contactEmail =
+          data.contactEmail && isEmailAddress(data.contactEmail)
+            ? data.contactEmail
+            : PUBLIC_CONTACT_EMAIL;
+        setSubmitStatus({
+          type: "error",
+          message: data.error || "We could not send your message from the site.",
+          contactEmail,
         });
       }
     } catch {
       setSubmitStatus({
         type: "error",
-        message: "Failed to send message. Please try again later.",
+        message: "We could not send your message from the site.",
+        contactEmail: PUBLIC_CONTACT_EMAIL,
       });
     } finally {
       setIsSubmitting(false);
@@ -159,13 +200,21 @@ export default function ContactForm({ interest }: { interest?: string | null }) 
         />
       </Field>
       {submitStatus.type && (
-        <p
+        <div
+          role="alert"
           className={`rounded-md px-3 py-2 text-sm ${
             submitStatus.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
           }`}
         >
-          {submitStatus.message}
-        </p>
+          <p>{submitStatus.message}</p>
+          {submitStatus.contactEmail && (
+            <p className="mt-2">
+              <a href={mailtoFor(submitStatus.contactEmail, formData)} className="font-medium underline">
+                Email {submitStatus.contactEmail}
+              </a>
+            </p>
+          )}
+        </div>
       )}
       <button
         type="submit"
